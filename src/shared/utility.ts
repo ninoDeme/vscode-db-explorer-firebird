@@ -78,7 +78,7 @@ export class Utility {
             await result.forEach(resultRow => {
               Object.keys(resultRow).forEach(field => {
                 if (resultRow[field] instanceof Function) {
-                  resultRow[field]((err, name, e) => {
+                  resultRow[field]((_err, _name, e) => {
                     e.on("data", chunk => {
                       resultRow[field] = chunk;
                     });
@@ -119,6 +119,7 @@ export class Utility {
     } else if (string.indexOf("delete") > -1) {
       return "Delete";
     }
+    return null;
   }
 
   public static async createConnection(connectionOptions: any): Promise<Firebird.Database> {

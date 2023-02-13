@@ -68,7 +68,7 @@ export class QueryResultsView extends EventEmitter implements Disposable {
       html = this.htmlCache[path];
       callback(html);
     } else {
-      readFile(path, "utf8", (err, content) => {
+      readFile(path, "utf8", (_err, content) => {
         html = content || "";
         html = this.replaceUris(html, path);
         this.htmlCache[path] = html;
@@ -82,7 +82,7 @@ export class QueryResultsView extends EventEmitter implements Disposable {
       .with({ scheme: this.resourceScheme })
       .toString();
     let regex = /(href|src)\=\"(.+?)\"/g;
-    html = html.replace(regex, `$1="${basePath + "$2"}"`);
+    html = html.replace(regex, `$1="${basePath + "$2"}"`).replace('%5', '/');
     return html;
   }
 

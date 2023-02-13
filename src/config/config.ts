@@ -24,7 +24,7 @@ function _mockarooApiKey(): string {
   // const apiKey: string = properties["firebird.mockarooApiKey"]["default"];
 
   if (apiKeyConf === "") {
-    return;
+    return null;
   } else {
     return apiKeyConf;
   }
@@ -91,4 +91,5 @@ function _recordsPerPage(): string {
     logger.error("Invalid value detected in Records Per Page settings. Fallback to default value.");
     return recordsPerPage;
   }
+  return null;
 }

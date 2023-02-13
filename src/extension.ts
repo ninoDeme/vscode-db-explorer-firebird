@@ -234,4 +234,3 @@ export function activate(context: ExtensionContext) {
   );
 }
 
-export function deactivate() {}

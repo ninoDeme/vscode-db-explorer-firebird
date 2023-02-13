@@ -1,5 +1,5 @@
 import { TreeDataProvider, EventEmitter, Event, ExtensionContext, TreeItem } from "vscode";
-import * as uuidv1 from "uuid/v1";
+import { v1  as uuidv1 } from "uuid";
 import { NodeHost } from "./nodes";
 import { ConnectionOptions, FirebirdTree } from "./interfaces";
 import { connectionWizard } from "./shared/connection-wizard";
@@ -73,18 +73,18 @@ export class FirebirdTreeDataProvider implements TreeDataProvider<FirebirdTree> 
   private async getHostNodes(): Promise<NodeHost[]> {
     logger.debug("Get host nodes start.");
     const connections = this.context.globalState.get<{ [key: string]: ConnectionOptions }>(Constants.ConectionsKey);
-    const NodeHosts = [];
+    const nodeHosts = [];
 
     if (connections) {
       const groupedConnections = this.groupedArray(connections);
 
       for (const key in groupedConnections) {
-        NodeHosts.push(new NodeHost(key, groupedConnections[key]));
+        nodeHosts.push(new NodeHost(key, groupedConnections[key]));
       }
     }
     Global.initStatusBarItems();
     logger.debug("Get host nodes end.");
-    return NodeHosts;
+    return nodeHosts;
   }
 
   private groupedArray(connections: Object) {
