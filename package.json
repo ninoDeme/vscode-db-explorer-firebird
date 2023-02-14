@@ -1,7 +1,7 @@
 {
   "name": "vscode-db-explorer-firebird-fork",
   "displayName": "DB Explorer For Firebird Databases Fork",
-  "version": "0.0.5",
+  "version": "0.0.51",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
@@ -28,7 +28,7 @@
     "name": "Marin Vitlov",
     "url": "https://github.com/mvitlov"
   },
-  "publisher": "marinv",
+  "publisher": "ninoDeme",
   "main": "./out/extension",
   "scripts": {
     "compile": "tsc -p ./",

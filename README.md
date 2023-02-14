@@ -22,11 +22,11 @@
 
 This extension allows you to connect directly to your [Firebird&reg; databases](https://firebirdsql.org/), list tables and fields, run queries, display/export results and more.
 
-![banner](https://github.com/mvitlov/vscode-db-explorer-firebird/blob/master/images/banner.jpg?raw=true)
+![banner](https://github.com/ninoDeme/vscode-db-explorer-firebird/blob/master/images/banner.jpg?raw=true)
 
 ## Features
 
-- [SQL Mock Data Generator](https://github.com/mvitlov/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) (probably broken)
+- [SQL Mock Data Generator](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) (probably broken)
 - Manage multiple database connections
 - List hosts, databases, tables and fields inside **Explorer View**
 - [Firebird Reserved Words](https://firebirdsql.org/refdocs/langrefupd25-reskeywords-full-reswords.html) **Code Completion**
@@ -75,7 +75,7 @@ The results will be displayed in new tab.
 
 ### SQL Mock Data Generator
 
-See [here](https://github.com/mvitlov/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) for more details.
+See [here](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) for more details.
 
 ## Settings
 
@@ -92,4 +92,4 @@ This extensions is still in the early development stage, and as such it may not 
 
 ## Bugs reports & Features requests
 
-You can submit a bug report or a feature suggestion via [GitHub Issue Tracker](https://github.com/mvitlov/vscode-db-explorer-firebird/issues).
+You can submit a bug report or a feature suggestion via [GitHub Issue Tracker](https://github.com/ninoDeme/vscode-db-explorer-firebird/issues).
