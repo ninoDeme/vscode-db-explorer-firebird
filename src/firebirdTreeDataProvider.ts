@@ -31,7 +31,7 @@ export class FirebirdTreeDataProvider implements TreeDataProvider<FirebirdTree> 
     logger.info("Add Connection start...");
 
     /* generate unique id for new connection */
-    const id = await uuidv1();
+    const id = uuidv1();
 
     /* fetch saved connections for update*/
     this.savedConnections = await this.context.globalState.get<{ [key: string]: ConnectionOptions }>(
