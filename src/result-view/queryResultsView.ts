@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import { dirname } from "path";
 import { readFile } from "fs";
 import { logger } from "../logger/logger";
+import * as vscode from 'vscode';
 
 export interface Message {
   command: string;
@@ -44,7 +45,7 @@ export class QueryResultsView extends EventEmitter implements Disposable {
     let options: WebviewPanelOptions & WebviewOptions = {
       enableScripts: true,
       retainContextWhenHidden: false, // we dont need to keep the state
-      localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
+      // localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
     };
 
     this.panel = window.createWebviewPanel(this.type, this.title, ViewColumn.Two, options);
@@ -78,11 +79,13 @@ export class QueryResultsView extends EventEmitter implements Disposable {
   }
 
   private replaceUris(html: string, htmlPath: string) {
-    let basePath = Uri.parse(dirname(htmlPath))
-      .with({ scheme: this.resourceScheme })
-      .toString();
-    let regex = /(href|src)\=\"(.+?)\"/g;
-    html = html.replace(regex, `$1="${basePath + "$2"}"`).replace('%5', '/');
+      
+    let path = dirname(htmlPath);
+    let x = (str: string): string => {
+      return this.panel.webview.asWebviewUri(vscode.Uri.file(path + str)).toString();
+    };
+    let regex = /(?<=(href|src)\=\")(.+?)(?=\")/g;
+    html = html.replace(regex, x);
     return html;
   }
 
