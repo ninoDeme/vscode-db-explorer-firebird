@@ -10,7 +10,6 @@ export class CompletionProvider implements CompletionItemProvider {
   constructor(private schemaProvider: SchemaProvider) {}
 
   provideCompletionItems(document: TextDocument) {
-    console.log(document)
     return this.schemaProvider.provideSchema(document).then(schema => {
       let items = this.getCompletionItems(
         document,
@@ -27,15 +26,20 @@ export class CompletionProvider implements CompletionItemProvider {
       items = firebirdReserved.map(word => new KeywordCompletionItem(word));
     }
     if (tables) {
-      let tableItems = tables.map(tbl => new TableCompletionItem(tbl.name));
+      let tableItems: TableCompletionItem[] = [];
 
       let columnItems: ColumnCompletionItem[] = [];
       
       let text = document.getText();
       
       tables.forEach(tbl => {
-        text.match(RegExp(`/(from|join) ${tbl.name} (as )? (?<alias>\\w+?)/gi`));
+        let alias = (text.match(RegExp(`((from)|(join)) ${tbl.name} (as )?(?!(on)|=|(with)|(using)|(as))(?<alias>\\w+)`, 'i')))?.groups?.alias;
         columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(`${tbl.name}.${col.name}`)));
+        tableItems.push(new TableCompletionItem(tbl.name));
+        if (alias) {
+          columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(`${alias}.${col.name}`, tbl.name)));
+          tableItems.push(new TableCompletionItem(alias, tbl.name));
+        }
       });
       items.push(...tableItems, ...columnItems);
     }
@@ -55,13 +59,15 @@ class KeywordCompletionItem extends CompletionItem {
 }
 
 class TableCompletionItem extends CompletionItem {
-  constructor(label: string) {
+  constructor(label: string, detail?: string) {
     super(label, CompletionItemKind.File);
+    this.detail = detail;
   }
 }
 
 class ColumnCompletionItem extends CompletionItem {
-  constructor(label: string) {
+  constructor(label: string, detail?: string) {
     super(label, CompletionItemKind.Field);
+    this.detail = detail;
   }
 }
