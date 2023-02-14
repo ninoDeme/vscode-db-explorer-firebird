@@ -81,7 +81,7 @@ export default class MockData implements Disposable {
       html = this.htmlCache[path];
       callback(html);
     } else {
-      readFile(path, "utf8", (err, content) => {
+      readFile(path, "utf8", (_err, content) => {
         html = content || "";
         html = this.replaceUris(html, path);
         this.htmlCache[path] = html;

@@ -65,9 +65,8 @@ export class NodeField implements FirebirdTree {
   private parseConstraint(constraint: any): string | undefined {
     if (constraint instanceof Buffer) {
       return this.decoder.decode(constraint);
-    } else {
-      return;
-    }
+    } 
+    return undefined;
   }
 
   // construct path to icon

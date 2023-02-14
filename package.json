@@ -1,7 +1,7 @@
 {
-  "name": "vscode-db-explorer-firebird",
-  "displayName": "DB Explorer For Firebird Databases",
-  "version": "0.0.4",
+  "name": "vscode-db-explorer-firebird-fork",
+  "displayName": "DB Explorer For Firebird Databases Fork",
+  "version": "0.0.5",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
@@ -286,8 +286,7 @@
   ],
   "dependencies": {
     "node-firebird": "^0.9.8",
-    "uuid": "^8.3.2",
-    "vscode": "^1.1.37"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
@@ -296,6 +295,7 @@
     "@types/vscode": "^1.32.0",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "@typescript-eslint/parser": "^5.52.0",
+    "@vscode/test-electron": "^2.2.3",
     "eslint": "^8.34.0",
     "typescript": "^4.0.3"
   },

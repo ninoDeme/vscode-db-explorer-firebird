@@ -4,16 +4,16 @@
   <br>
   DB Explorer for Firebird&reg; databases
   <br>
-  <br>
 </h1>
+<h3 align="center"> Fork of original extension from <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">  Marin Vitlov </a> that fixes the query webview</h3>
 <h4 align="center">Explore and run queries against your Firebird&reg; databases without leaving VS Code.</h4>
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">
-    <img src="https://vsmarketplacebadge.apphb.com/version/marinv.vscode-db-explorer-firebird.svg" alt="badge-version">
+    badge-version
   </a>
   <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">
-    <img src="https://vsmarketplacebadge.apphb.com/installs/marinv.vscode-db-explorer-firebird.svg" alt="badge-installs">
+    badge-installs
   </a>
   <!-- <a href="https://">
     <img src="https://" alt="badge3">
@@ -26,7 +26,7 @@ This extension allows you to connect directly to your [Firebird&reg; databases](
 
 ## Features
 
-- **NEW!** [SQL Mock Data Generator](https://github.com/mvitlov/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator)
+- [SQL Mock Data Generator](https://github.com/mvitlov/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) (probably broken)
 - Manage multiple database connections
 - List hosts, databases, tables and fields inside **Explorer View**
 - [Firebird Reserved Words](https://firebirdsql.org/refdocs/langrefupd25-reskeywords-full-reswords.html) **Code Completion**

@@ -40,7 +40,7 @@ export function activate(context: ExtensionContext) {
     firebirdLanguageServer
   );
 
-  firebirdLanguageServer.setSchemaHandler(doc => {
+  firebirdLanguageServer.setSchemaHandler(_doc => {
     return firebirdDatabaseWords.getSchema();
   });
 
@@ -66,7 +66,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("firebird.explorer.newSqlDocument", () => {
       Utility.createSQLTextDocument()
-        .then(res => {
+        .then(_res => {
           logger.info("New SQL document created...");
         })
         .catch(err => {

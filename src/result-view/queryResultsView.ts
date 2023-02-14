@@ -1,4 +1,4 @@
-import { WebviewPanel, window, ViewColumn, Disposable, Uri, WebviewPanelOptions, WebviewOptions } from "vscode";
+import { WebviewPanel, window, ViewColumn, Disposable, WebviewPanelOptions, WebviewOptions } from "vscode";
 import { EventEmitter } from "events";
 import { dirname } from "path";
 import { readFile } from "fs";
@@ -12,20 +12,20 @@ export interface Message {
 }
 
 export class QueryResultsView extends EventEmitter implements Disposable {
-  private resourceScheme = "vscode-resource";
+  // private resourceScheme = "vscode-resource";
   private disposable?: Disposable;
 
-  private resourcesPath: string;
+  // private resourcesPath: string;
   private panel: WebviewPanel | undefined;
   private htmlCache: { [path: string]: string };
   constructor(private type: string, private title: string) {
     super();
-    this.resourcesPath = "";
+    // this.resourcesPath = "";
     this.htmlCache = {};
   }
 
   show(htmlPath: string) {
-    this.resourcesPath = dirname(htmlPath);
+    // this.resourcesPath = dirname(htmlPath);
     if (!this.panel) {
       this.init();
     }
@@ -102,7 +102,7 @@ export class QueryResultsView extends EventEmitter implements Disposable {
       .slice(1);
   }
 
-  public handleMessage(message: Message) {
+  public handleMessage(_message: Message) {
     logger.info("HANDLE MESSAGE CALLED");
 
     throw new Error("Method not implemented");
