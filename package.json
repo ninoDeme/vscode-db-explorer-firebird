@@ -17,11 +17,11 @@
     "SQL"
   ],
   "bugs": {
-    "url": "https://github.com/mvitlov/vscode-db-explorer-firebird/issues"
+    "url": "https://github.com/ninoDeme/vscode-db-explorer-firebird/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mvitlov/vscode-db-explorer-firebird"
+    "url": "https://github.com/ninoDeme/vscode-db-explorer-firebird"
   },
   "license": "MIT",
   "author": {

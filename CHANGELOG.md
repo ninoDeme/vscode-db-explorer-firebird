@@ -2,6 +2,13 @@
 
 All notable changes to the "vscode-db-explorer-firebird" extension will be documented in this file.
 
+## 0.0.5 - 2023-02-14
+
+### Fixed
+ - Fixed query results webview
+
+# Changes below where in the original extension
+
 ## 0.0.4 - 2019-03-11
 
 ### Fixed
