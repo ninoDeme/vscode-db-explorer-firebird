@@ -26,6 +26,12 @@ This extension allows you to connect directly to your [Firebird&reg; databases](
 
 ## Features
 
+### Features added in this fork
+
+- Support to table type alias
+
+### Features in the original version
+
 - [SQL Mock Data Generator](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) (probably broken)
 - Manage multiple database connections
 - List hosts, databases, tables and fields inside **Explorer View**

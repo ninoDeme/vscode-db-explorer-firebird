@@ -2,7 +2,9 @@
 
 All notable changes to the "vscode-db-explorer-firebird" extension will be documented in this file.
 
-## 0.0.5 - 2023-02-14
+## 0.1.0 - 2023-02-14
+
+ - Added support to table type alias
 
 ### Fixed
  - Fixed query results webview

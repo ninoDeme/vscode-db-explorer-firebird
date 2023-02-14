@@ -1,7 +1,7 @@
 {
   "name": "vscode-db-explorer-firebird-fork",
   "displayName": "DB Explorer For Firebird Databases Fork",
-  "version": "0.0.51",
+  "version": "0.1.0",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
