@@ -5,7 +5,7 @@
   DB Explorer for Firebird&reg; databases
   <br>
 </h1>
-<h3 align="center"> Fork of original extension from <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">  Marin Vitlov </a> that fixes the query webview</h3>
+<h3 align="center"> Fork of extension from <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">  Marin Vitlov </a></h3>
 <h4 align="center">Explore and run queries against your Firebird&reg; databases without leaving VS Code.</h4>
 
 <p align="center">
@@ -28,7 +28,7 @@ This extension allows you to connect directly to your [Firebird&reg; databases](
 
 ### Features added in this fork
 
-- Support to table type alias
+- **Table alias** in code completion
 
 ### Features in the original version
 
