@@ -10,16 +10,18 @@ export class CompletionProvider implements CompletionItemProvider {
   constructor(private schemaProvider: SchemaProvider) {}
 
   provideCompletionItems(document: TextDocument) {
+    console.log(document)
     return this.schemaProvider.provideSchema(document).then(schema => {
       let items = this.getCompletionItems(
+        document,
         schema.reservedKeywords ? firebirdReserved : undefined,
-        schema.tables.length > 0 ? schema.tables : undefined
+        schema.tables.length > 0 ? schema.tables : undefined,
       );
       return items;
     });
   }
 
-  private getCompletionItems(firebirdReserved?: FirebirdReserved[], tables?: Schema.Table[]) {
+  private getCompletionItems(document: TextDocument, firebirdReserved?: FirebirdReserved[], tables?: Schema.Table[]) {
     let items: CompletionItem[] = [];
     if (firebirdReserved) {
       items = firebirdReserved.map(word => new KeywordCompletionItem(word));
@@ -28,7 +30,11 @@ export class CompletionProvider implements CompletionItemProvider {
       let tableItems = tables.map(tbl => new TableCompletionItem(tbl.name));
 
       let columnItems: ColumnCompletionItem[] = [];
+      
+      let text = document.getText();
+      
       tables.forEach(tbl => {
+        text.match(RegExp(`/(from|join) ${tbl.name} (as )? (?<alias>\\w+?)/gi`));
         columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(`${tbl.name}.${col.name}`)));
       });
       items.push(...tableItems, ...columnItems);
