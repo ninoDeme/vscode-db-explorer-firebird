@@ -1,4 +1,4 @@
-import { TreeItem, TreeItemCollapsibleState, commands, Uri } from "vscode";
+import { TreeItem, TreeItemCollapsibleState, commands, Uri, ExtensionContext } from "vscode";
 import { join } from "path";
 import { NodeField, NodeInfo } from ".";
 import { ConnectionOptions, FirebirdTree, Options } from "../interfaces";
@@ -11,15 +11,15 @@ import MockData from "../mock-data/mock-data";
 export class NodeTable implements FirebirdTree {
   constructor(private readonly dbDetails: ConnectionOptions, private readonly table: string) {}
 
-  public getTreeItem(): TreeItem {
+  public getTreeItem(context: ExtensionContext): TreeItem {
     return {
       label: this.table.trim(),
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: "table",
       tooltip: `[TABLE] ${this.table}`,
       iconPath: {
-        dark: join(__filename, "..", "..", "..", "resources", "icons", "dark", "table-dark.svg"),
-        light: join(__filename, "..", "..", "..", "resources", "icons", "light", "table-light.svg")
+        dark: join(context.extensionPath, "resources", "icons", "dark", "table-dark.svg"),
+        light: join(context.extensionPath, "resources", "icons", "light", "table-light.svg")
       }
     };
   }

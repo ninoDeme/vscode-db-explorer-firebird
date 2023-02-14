@@ -9,15 +9,15 @@ import { logger } from "../logger/logger";
 export class NodeHost implements FirebirdTree {
   constructor(private readonly host: string, private readonly dbList: Array<any>) {}
 
-  public getTreeItem(): TreeItem {
+  public getTreeItem(context: ExtensionContext): TreeItem {
     return {
       label: this.host,
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: "host",
       tooltip: `[HOST] ${this.host}`,
       iconPath: {
-        dark: join(__filename, "..", "..", "..", "resources", "icons", "dark", "host-dark.svg"),
-        light: join(__filename, "..", "..", "..", "resources", "icons", "light", "host-light.svg")
+        dark: join(context.extensionPath, "resources", "icons", "dark", "host-dark.svg"),
+        light: join(context.extensionPath, "resources", "icons", "light", "host-light.svg")
       }
     };
   }

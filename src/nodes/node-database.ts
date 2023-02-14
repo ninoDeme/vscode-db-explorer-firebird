@@ -13,7 +13,7 @@ export class NodeDatabase implements FirebirdTree {
   constructor(private readonly dbDetails: ConnectionOptions) {}
 
   // list databases grouped by host names
-  public getTreeItem(): TreeItem {
+  public getTreeItem(context: ExtensionContext): TreeItem {
     return {
       label: this.dbDetails.database
         .split("\\")
@@ -24,8 +24,10 @@ export class NodeDatabase implements FirebirdTree {
       contextValue: "database",
       tooltip: `[DATABASE] ${this.dbDetails.database}`,
       iconPath: {
-        dark: join(__filename, "..", "..", "..", "resources", "icons", "dark", "db-dark.svg"),
-        light: join(__filename, "..", "..", "..", "resources", "icons", "light", "db-light.svg")
+        /* dark: join(__filename, "..", "..", "..", "resources", "icons", "dark", "db-dark.svg"),
+        light: join(__filename, "..", "..", "..", "resources", "icons", "light", "db-light.svg") */
+        dark: join(context.extensionPath, "resources", "icons", "dark", "db-dark.svg"),
+        light: join(context.extensionPath, "resources", "icons", "light", "db-light.svg")
       }
     };
   }

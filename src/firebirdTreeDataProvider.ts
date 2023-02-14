@@ -16,7 +16,7 @@ export class FirebirdTreeDataProvider implements TreeDataProvider<FirebirdTree> 
   constructor(private context: ExtensionContext) {}
 
   public getTreeItem(element: FirebirdTree): Promise<TreeItem> | TreeItem {
-    return element.getTreeItem();
+    return element.getTreeItem(this.context);
   }
 
   public getChildren(element?: FirebirdTree): Thenable<FirebirdTree[]> | FirebirdTree[] {

@@ -1,4 +1,4 @@
-import { TreeItem, TreeItemCollapsibleState } from "vscode";
+import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { TextDecoder } from "util";
 import { join } from "path";
 import { ConnectionOptions, FirebirdTree } from "../interfaces";
@@ -17,15 +17,15 @@ export class NodeField implements FirebirdTree {
     this.decoder = new TextDecoder();
   }
 
-  public getTreeItem(): TreeItem {
+  public getTreeItem(context: ExtensionContext): TreeItem {
     return {
       label: `${this.field.FIELD_NAME.trim()} : ${this.field.FIELD_TYPE.trim() + " (" + this.field.FIELD_LENGTH + ")"}`,
       collapsibleState: TreeItemCollapsibleState.None,
       contextValue: "field",
       tooltip: this.getTooltip(),
       iconPath: {
-        dark: this.setIcon(this.field.CONSTRAINT_TYPE, this.field.NOT_NULL, "dark"),
-        light: this.setIcon(this.field.CONSTRAINT_TYPE, this.field.NOT_NULL, "light")
+        dark: this.setIcon(this.field.CONSTRAINT_TYPE, this.field.NOT_NULL, "dark", context),
+        light: this.setIcon(this.field.CONSTRAINT_TYPE, this.field.NOT_NULL, "light", context)
       }
     };
   }
@@ -35,16 +35,16 @@ export class NodeField implements FirebirdTree {
   }
 
   // sets the correct field icon depending on field type and ui theme color
-  private setIcon(constraint: any, notNull: number, tint: string): string {
+  private setIcon(constraint: any, notNull: number, tint: string, context: ExtensionContext): string {
     const type = this.parseConstraint(constraint);
     if (!type) {
-      return notNull ? this.joinPath("notnull", tint) : this.joinPath("null", tint);
+      return notNull ? this.joinPath("notnull", tint, context) : this.joinPath("null", tint, context);
     } else if (type.trim() === "PRIMARY KEY") {
-      return this.joinPath("primary", tint);
+      return this.joinPath("primary", tint, context);
     } else if (type.trim() === "FOREIGN KEY") {
-      return this.joinPath("foreign", tint);
+      return this.joinPath("foreign", tint, context);
     } else if (type.trim() === "UNIQUE") {
-      return this.joinPath("unique", tint);
+      return this.joinPath("unique", tint, context);
     } else {
       return "";
     }
@@ -52,9 +52,9 @@ export class NodeField implements FirebirdTree {
 
   // construct tooltip
   private getTooltip(): string {
-    let constraint = this.parseConstraint(this.field.CONSTRAINT_TYPE);
-    let type = `${this.field.FIELD_TYPE.trim() + " (" + this.field.FIELD_LENGTH + ")"}`;
-    let notNull = this.field.NOT_NULL;
+    const constraint = this.parseConstraint(this.field.CONSTRAINT_TYPE);
+    const type = `${this.field.FIELD_TYPE.trim() + " (" + this.field.FIELD_LENGTH + ")"}`;
+    const notNull = this.field.NOT_NULL;
 
     return `${this.field.FIELD_NAME.trim()}\n${type}\n${constraint ? constraint + "\n" : ""}${
       notNull ? "NOT NULL" : "NULL"
@@ -70,8 +70,8 @@ export class NodeField implements FirebirdTree {
   }
 
   // construct path to icon
-  private joinPath(type: string, tint: string): string {
-    return join(__filename, "..", "..", "..", "resources", "icons", tint, type + "-" + tint + ".svg");
+  private joinPath(type: string, tint: string, context: ExtensionContext): string {
+    return join(context.extensionPath, "resources", "icons", tint, type + "-" + tint + ".svg");
   }
 
   //  run predefined sql query

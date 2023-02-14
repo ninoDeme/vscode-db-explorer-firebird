@@ -58,7 +58,7 @@ export default class MockData implements Disposable {
     let options: WebviewPanelOptions & WebviewOptions = {
       enableScripts: true,
       retainContextWhenHidden: false, // we dont need to keep the state
-      localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
+      // localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
     };
 
     this.panel = window.createWebviewPanel("mockdata", "Generate Mock Data", ViewColumn.Beside, options);

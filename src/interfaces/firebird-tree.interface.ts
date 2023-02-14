@@ -1,8 +1,8 @@
-import { TreeItem } from "vscode";
+import { ExtensionContext, TreeItem } from "vscode";
 /**
  * Explorer view
  */
 export interface FirebirdTree {
-  getTreeItem(): TreeItem | Promise<TreeItem>;
+  getTreeItem(context: ExtensionContext): TreeItem | Promise<TreeItem>;
   getChildren(): FirebirdTree[] | Promise<FirebirdTree[]>;
 }
