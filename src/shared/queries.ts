@@ -15,8 +15,7 @@ export function getTablesQuery(maxTableCount: number): string {
 }
 
 export function tableInfoQuery(tableName: string): string {
-  return ` 
-  SELECT TRIM(r.RDB$FIELD_NAME) AS FIELD_NAME,
+  return `SELECT TRIM(r.RDB$FIELD_NAME) AS FIELD_NAME,
          CASE f.RDB$FIELD_TYPE
            WHEN 261 THEN 'BLOB'
            WHEN 14  THEN 'CHAR'
@@ -57,17 +56,36 @@ export function tableInfoQuery(tableName: string): string {
 }
 
 export function fieldsQuery(tables: string[]): string {
-  let string = tables.join("','");
-  return ` 
-SELECT TRIM(r.RDB$FIELD_NAME) AS Field,
+  const string = tables.join("','");
+  return `SELECT TRIM(r.RDB$FIELD_NAME) AS Field,
        TRIM(r.RDB$RELATION_NAME) AS Tbl,
   CASE WHEN r.RDB$NULL_FLAG = 1 THEN '1' ELSE '0' END AS NOTNULL,
             r.RDB$DEFAULT_VALUE AS DFLT_VALUE,
-            r.RDB$FIELD_POSITION AS Pos 
+            r.RDB$FIELD_POSITION AS Pos,
+            CASE f.RDB$FIELD_TYPE
+              WHEN 261 THEN 'BLOB'
+              WHEN 14  THEN 'CHAR'
+              WHEN 40  THEN 'CSTRING'
+              WHEN 11  THEN 'D_FLOAT'
+              WHEN 27  THEN 'DOUBLE'
+              WHEN 10  THEN 'FLOAT'
+              WHEN 16  THEN 'INT64'
+              WHEN 8   THEN 'INTEGER'
+              WHEN 9   THEN 'QUAD'
+              WHEN 7   THEN 'SMALLINT'
+              WHEN 12  THEN 'DATE'
+              WHEN 13  THEN 'TIME'
+              WHEN 35  THEN 'TIMESTAMP'
+              WHEN 37  THEN 'VARCHAR'
+              ELSE 'UNKNOWN'
+            END AS FIELD_TYPE,
+            f.RDB$FIELD_LENGTH as FIELD_LENGTH
        FROM RDB$RELATION_FIELDS r
+      left join RDB$FIELDS f on f.RDB$FIELD_NAME = r.RDB$FIELD_SOURCE
       WHERE (r.rdb$system_flag IS NULL OR r.rdb$system_flag = 0) 
         AND r.RDB$RELATION_NAME IN ('${string}')
-   GROUP BY Field,Tbl, NOTNULL, DFLT_VALUE, Pos ORDER BY Tbl,Pos;`;
+   GROUP BY Field, Tbl, NOTNULL, DFLT_VALUE, Pos, FIELD_TYPE, FIELD_LENGTH
+   ORDER BY Tbl, Pos;`;
 }
 
 export function selectAllRecordsQuery(tableName: string): string {

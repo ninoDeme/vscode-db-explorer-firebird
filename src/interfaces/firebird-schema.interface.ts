@@ -17,5 +17,6 @@ export namespace Schema {
 
   export interface Field {
     name: string;
+    type?: string;
   }
 }

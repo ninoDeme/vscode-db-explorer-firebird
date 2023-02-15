@@ -1,6 +1,6 @@
-import { CompletionItemProvider, TextDocument, CompletionItem, CompletionItemKind } from "vscode";
-import { Schema, FirebirdSchema, FirebirdReserved } from "../interfaces";
-import { firebirdReserved } from "./firebird-reserved";
+import {CompletionItemProvider, TextDocument, CompletionItem, CompletionItemKind, MarkdownString, Position, CompletionContext} from "vscode";
+import {Schema, FirebirdSchema, FirebirdReserved} from "../interfaces";
+import {firebirdReserved} from "./firebird-reserved";
 
 interface SchemaProvider {
   provideSchema: (doc: TextDocument) => Thenable<FirebirdSchema>;
@@ -9,42 +9,56 @@ interface SchemaProvider {
 export class CompletionProvider implements CompletionItemProvider {
   constructor(private schemaProvider: SchemaProvider) {}
 
-  provideCompletionItems(document: TextDocument) {
+  provideCompletionItems(document: TextDocument, position: Position, _token, context: CompletionContext) {
     return this.schemaProvider.provideSchema(document).then(schema => {
-      let items = this.getCompletionItems(
+      return this.getCompletionItems(
         document,
+        position,
+        context,
         schema.reservedKeywords ? firebirdReserved : undefined,
         schema.tables.length > 0 ? schema.tables : undefined,
       );
-      return items;
     });
   }
 
-  private getCompletionItems(document: TextDocument, firebirdReserved?: FirebirdReserved[], tables?: Schema.Table[]) {
-    let items: CompletionItem[] = [];
-    if (firebirdReserved) {
-      items = firebirdReserved.map(word => new KeywordCompletionItem(word));
-    }
-    if (tables) {
-      let tableItems: TableCompletionItem[] = [];
+  private getCompletionItems(document: TextDocument, position: Position, context: CompletionContext, firebirdReserved?: FirebirdReserved[], tables?: Schema.Table[]) {
+    const items: CompletionItem[] = [];
 
-      let columnItems: ColumnCompletionItem[] = [];
-      
-      let text = document.getText();
-      
+    let triggeredByDot = context.triggerCharacter === '.' || (context.triggerKind === 0 && document.lineAt(position).text[position.character - 1] === '.');
+    if (tables) {
+      const tableItems: TableCompletionItem[] = [];
+
+      const columnItems: ColumnCompletionItem[] = [];
+
+      const text = document.getText();
+
+      if (triggeredByDot) {
+        const tableName: string = document.getText(document.getWordRangeAtPosition(position.translate(0, -1), /\w+(?=\.)/));
+        const alias = text.match(RegExp(`((from)|(join)) (?<alias>\\w+) (as )?(?!(on)|=|(with)|(using)|(as))(${tableName})`, 'i'))?.groups?.alias;
+        const tbl = tables.find(currTable => currTable.name.toLowerCase() === (alias ?? tableName).toLowerCase());
+        if (tbl) {
+          columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(col.name, `${tbl.name}.${col.name}: ${col.type}`)));
+        } else {
+          triggeredByDot = false;
+        }
+      }
+      if (!triggeredByDot) {
       tables.forEach(tbl => {
-        let alias = (text.match(RegExp(`((from)|(join)) ${tbl.name} (as )?(?!(on)|=|(with)|(using)|(as))(?<alias>\\w+)`, 'i')))?.groups?.alias;
-        columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(`${tbl.name}.${col.name}`)));
-        tableItems.push(new TableCompletionItem(tbl.name));
+        const alias = text.match(RegExp(`((from)|(join)) ${tbl.name} (as )?(?!(on)|=|(with)|(using)|(as))(?<alias>\\w+)`, 'i'))?.groups?.alias;
+        tableItems.push(new TableCompletionItem(tbl.name, undefined, tbl.fields));
         if (alias) {
-          columnItems.push(...tbl.fields.map(col => new ColumnCompletionItem(`${alias}.${col.name}`, tbl.name)));
-          tableItems.push(new TableCompletionItem(alias, tbl.name));
+          tableItems.push(new TableCompletionItem(alias, tbl.name, tbl.fields));
         }
       });
+      }
       items.push(...tableItems, ...columnItems);
+    }
+    if (firebirdReserved && !triggeredByDot) {
+      items.push(...firebirdReserved.map(word => new KeywordCompletionItem(word)));
     }
     return items;
   }
+
 }
 
 class KeywordCompletionItem extends CompletionItem {
@@ -59,9 +73,21 @@ class KeywordCompletionItem extends CompletionItem {
 }
 
 class TableCompletionItem extends CompletionItem {
-  constructor(label: string, detail?: string) {
+  /**
+   * Creates an instance of TableCompletionItem.
+   * @param {string} label
+   * @param {string} [detail]
+   * @param {Schema.Field} [fields]
+   * @memberof TableCompletionItem
+   */
+  constructor(label: string, detail?: string, fields?: Schema.Field[]) {
     super(label, CompletionItemKind.File);
     this.detail = detail;
+    if (fields) {
+      const mkTable = new MarkdownString(`| Field | Type | \n |---|---| `);
+      fields.forEach(field => mkTable.appendMarkdown(`\n | ${field.name} | ${field.type} |`));
+      this.documentation = mkTable;
+    }
   }
 }
 

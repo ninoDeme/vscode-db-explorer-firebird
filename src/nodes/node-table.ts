@@ -25,7 +25,7 @@ export class NodeTable implements FirebirdTree {
   }
 
   public async getChildren(): Promise<any> {
-    let qry = tableInfoQuery(this.table);
+    const qry = tableInfoQuery(this.table);
 
     return Utility.createConnection(this.dbDetails)
       .then(connection => {

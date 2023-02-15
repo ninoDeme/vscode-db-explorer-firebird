@@ -2,9 +2,14 @@
 
 All notable changes to the "vscode-db-explorer-firebird" extension will be documented in this file.
 
+## 0.1.3 - 2023-02-15
+
+ - Added type or field information to completion window
+ - Only autocomplete fields after table
+
 ## 0.1.0 - 2023-02-14
 
- - Added support to table type alias
+ - Added support to table alias in completion
 
 ### Fixed
  - Fixed query results webview

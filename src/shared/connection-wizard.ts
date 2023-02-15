@@ -115,7 +115,6 @@ export async function connectionWizard() {
 }
 
 class InputFlowAction {
-  private constructor() {}
   static back = new InputFlowAction();
   static cancel = new InputFlowAction();
 }

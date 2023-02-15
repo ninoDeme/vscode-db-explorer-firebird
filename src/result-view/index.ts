@@ -23,13 +23,13 @@ export default class ResultView extends QueryResultsView implements Disposable {
      * DEV: "src",...
      * PROD: "out",...
      */
-     console.log(join(this.extensionPath, "out", "result-view", "htmlContent", "index.html"));
+     // console.log(join(this.extensionPath, "out", "result-view", "htmlContent", "index.html"));
      
     this.show(join(this.extensionPath, "src", "result-view", "htmlContent", "index.html"));
   }
 
   handleMessage(message: Message): void {
-    let data: Object | undefined;
+    let data: object | undefined;
 
     if (this.resultSet && message.command === "getData") {
       data = this.getPreparedResults();
@@ -43,10 +43,10 @@ export default class ResultView extends QueryResultsView implements Disposable {
   }
 
   /* prepare results before displaying */
-  private getPreparedResults(): Object {
-    let decoder = new TextDecoder();
-    let tableHeader: Object[] = [];
-    let tableBody: string[][] = [];
+  private getPreparedResults(): object {
+    const decoder = new TextDecoder();
+    const tableHeader: object[] = [];
+    const tableBody: string[][] = [];
 
     if (!this.resultSet || this.resultSet.length === 0) {
       return { tableHeader: [], tableBody: [], recordsPerPage: this.recordsPerPage };
@@ -59,7 +59,7 @@ export default class ResultView extends QueryResultsView implements Disposable {
     }
     /* get table body */
     this.resultSet.forEach(row => {
-      let temp = [];
+      const temp = [];
 
       for (const field in row) {
         if (row.hasOwnProperty(field)) {
