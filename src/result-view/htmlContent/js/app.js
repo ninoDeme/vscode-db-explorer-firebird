@@ -1,4 +1,4 @@
-$(document).ready(() => {
+$(() => {
   const vscode = acquireVsCodeApi();
 
   vscode.postMessage({
@@ -18,7 +18,7 @@ $(document).ready(() => {
   });
 });
 function showData(data) {
-  $("#example").DataTable({
+  $("#query-results").DataTable({
     scrollX: true,
     iDisplayLength: data.recordsPerPage == "All records" ? -1 : parseInt(data.recordsPerPage),
     columns: data.tableHeader,
@@ -34,7 +34,7 @@ function showData(data) {
         buttons: [
           {
             text: "as JSON",
-            action: function(e, dt, button, config) {
+            action: function (e, dt, button, config) {
               var data = dt.buttons.exportData();
               $.fn.dataTable.fileSave(new Blob([JSON.stringify(data)]), "Export.json");
             },
