@@ -1,5 +1,6 @@
 import {CompletionItemProvider, TextDocument, CompletionItem, CompletionItemKind, MarkdownString, Position, CompletionContext} from "vscode";
 import {Schema, FirebirdSchema, FirebirdReserved} from "../interfaces";
+import {Parser} from '../parser';
 import {firebirdReserved} from "./firebird-reserved";
 
 interface SchemaProvider {
@@ -30,6 +31,7 @@ export class CompletionProvider implements CompletionItemProvider {
 
       const columnItems: ColumnCompletionItem[] = [];
 
+      new Parser().parseString(document);
       const text = document.getText();
 
       if (triggeredByDot) {
