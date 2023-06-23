@@ -1,106 +1,78 @@
 import {Range, TextDocument, Position, EndOfLine} from 'vscode';
 
 export class Parser {
-    parseString(sql: TextDocument) {
+    
+    state: State[] = [];
+    parsed: Word[] = [];
+    text: string;
+    index: number = 0;
 
-        const documentScope = new DocSymbol(sql);
-        
-        const newLineChr = sql.eol === EndOfLine.LF ? '\n' : '\r\n';
-        const text = documentScope.getText().split(newLineChr);
-        
-        let currScope = documentScope;
-        let currSymbol: keyword;
-        text.forEach((line, lineIndex) => {
+    parse(sql: TextDocument) {
 
-            let chrIndex = 0;
-            currSymbol = new keyword(chrIndex, line);
-            while(chrIndex < line.length) {
-                if (line[chrIndex] === ' ') {
-                    currSymbol.endChr = chrIndex;
-                    currSymbol.endLine = lineIndex;
-                    chrIndex++;
-                    currScope.scope.push(currSymbol);
-                    currSymbol = new keyword(chrIndex, line);
-                    continue;
-                }
-                chrIndex++;
-            }
-            currSymbol.endChr = chrIndex;
-            currSymbol.endLine = lineIndex;
+        this.text = sql.getText();
 
-            currScope.scope.push(currSymbol);
-        });
-        
-        console.log(documentScope)
+        this.state = [new StatementStart(this)];
+        this.parsed = [];
 
-        /* const parseFunc: (currRange: Range, sql: DocSymbol, chr: number, pos: Position, parent: fbSymbol) => fbSymbol = (currRange, sql, chr, pos, parent) => {
-            let newPos: Position;
-            let newRange: Range;
-            newPos = pos.translate(0, 1);
-            newRange = currRange.with(undefined, newPos);
-            console.log(sql.document.getText(newRange));
-            if (sql.document.getText(newRange).includes('\n')) {
-                newPos = pos.with(pos.line + 1, 0);
-                if (sql.range.contains(newPos)) {
-                    newRange = new Range(newPos, newPos);
-                    parent.scope.push(...parseFunc(newRange, sql, chr + 1, newPos, parent).scope, new basicSymbol(currRange));
-                    return parent;
-                }
-                parent.scope.push(new basicSymbol(currRange));
-                return parent;
-            }
-            parent.scope.push(...parseFunc(newRange, sql, chr + 1, newPos, parent).scope);
-            return parent;
-        }; */
+        console.log(this.parsed);
         
-        return documentScope;
+        while (this.index < this.text.length) {
+            this.next();
+        }
+        
+        return this.parsed;
     }
+    
+    next() {
+        this.state[this.state.length - 1].parse();
+    }
+    
 }
 
 function getCharAt(pos: Position, document: TextDocument) {
     return document.getText(new Range(pos, pos.with(0, 1)));
 }
-interface fbSymbol {
-    getText: (document) => string,
-    range: Range,
-    type: string,
-    scope: fbSymbol[],
+
+interface State {
+    parser: Parser;
+    match: RegExp;
+    parse: () => void;
 }
 
-class DocSymbol implements fbSymbol {
-    getText() {
-        return this._text = this._text ?? this.document.getText();
-    }
-    _text: string;
-    range: Range;
-    type: string = 'document';
-    scope: fbSymbol[] = [];
-    document: TextDocument;
-    constructor(document: TextDocument) {
-        this.document = document;
-        this.range = new Range(0, 0, document.lineCount - 1, document.lineAt(document.lineCount - 1).text.length - 1);
+class BaseState implements State {
+    parser: Parser;
+    match: RegExp;
+    parse: () => void;   
+    constructor(parser: Parser) {
+        this.parser = parser;
     }
 }
 
-class keyword implements fbSymbol {
-    getText(document) {
-        return this._text = this._text ?? document.getText(this.range);
-    }
-    _text: string;
-    range: Range;
-    label: string;
-    startChr: number;
-    startLine: number;
-    endChr: number;
-    endLine: number;
-    type: string;
-    scope: fbSymbol[] = [];
-    constructor(startChr, startLine) {
-        this.startChr = startChr;
-        this.startLine = startLine;
-    }
+class StatementStart extends BaseState {
+
+    match: RegExp = /^|\(|;\s*?/;
+    parse = () => {
+        const currText = this.parser.text.substring(this.parser.index);
+        const select = currText.match(/^select/i)?.[0];
+        if (select) {
+            
+            this.parser.index += select.length;
+            this.parser.state.push(new SelectStatement(this.parser));
+            return;
+        }
+    };
+    
 }
 
-class escapeSequence extends keyword {
-    type = 'escape';
+class SelectStatement extends BaseState {
+    
+}
+
+class Word {
+    static match: RegExp = /^|\(|;\s*?/;
+    static parse: (parser: Parser) => void;
+
+    word: string;
+    start: number;
+    end: number;
 }

@@ -11,7 +11,6 @@
   "prettier.printWidth": 160,
   "prettier.singleQuote": true,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "workbench.colorTheme": "One Dark Pro",
   "workbench.editor.enablePreview": false,
   "workbench.editor.enablePreviewFromQuickOpen": false,
   "liveServer.settings.CustomBrowser": "chrome",
