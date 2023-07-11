@@ -20,12 +20,12 @@ export class KeywordsDb {
 
     build(conOptions: ConnectionOptions, codeCompletionKeywords: boolean, maxTablesCount: number): Thenable<Schema.Database> {
         return new Promise(resolve => {
-            let schema = {
+            const schema = {
                 reservedKeywords: codeCompletionKeywords,
                 path: conOptions.database,
                 tables: [],
             } as Schema.Database;
-            let tableNames: string[] = [];
+            const tableNames: string[] = [];
 
             this.execute(conOptions, getTablesQuery(maxTablesCount), resultSet => {
                 if (!resultSet || resultSet.length === 0) {

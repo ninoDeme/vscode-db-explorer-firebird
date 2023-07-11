@@ -2,6 +2,7 @@ import { workspace, WorkspaceConfiguration } from "vscode";
 import { Options } from "../interfaces";
 import { Level, logger } from "../logger/logger";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const properties = require("../../package.json").contributes.configuration.properties;
 
 export function getOptions() {

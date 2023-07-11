@@ -2,6 +2,7 @@ import {CompletionItemProvider, TextDocument, CompletionItem, CompletionItemKind
 import {Schema, FirebirdSchema, FirebirdReserved} from "../interfaces";
 import {Parser} from '../parser';
 import {firebirdReserved} from "./firebird-reserved";
+import {logger} from '../logger/logger';
 
 interface SchemaProvider {
   provideSchema: (doc: TextDocument) => Thenable<FirebirdSchema>;
@@ -10,28 +11,27 @@ interface SchemaProvider {
 export class CompletionProvider implements CompletionItemProvider {
   constructor(private schemaProvider: SchemaProvider) {}
 
-  provideCompletionItems(document: TextDocument, position: Position, _token, context: CompletionContext) {
-    return this.schemaProvider.provideSchema(document).then(schema => {
-      return this.getCompletionItems(
-        document,
-        position,
-        context,
-        schema.reservedKeywords ? firebirdReserved : undefined,
-        schema.tables.length > 0 ? schema.tables : undefined,
-      );
-    });
+  async provideCompletionItems(document: TextDocument, position: Position, _token, context: CompletionContext) {
+    const schema = await this.schemaProvider.provideSchema(document);
+    return this.getCompletionItems(
+      document,
+      position,
+      context,
+      schema.reservedKeywords ? firebirdReserved : undefined,
+      schema.tables.length > 0 ? schema.tables : undefined);
   }
 
   private getCompletionItems(document: TextDocument, position: Position, context: CompletionContext, firebirdReserved?: FirebirdReserved[], tables?: Schema.Table[]) {
     const items: CompletionItem[] = [];
 
     let triggeredByDot = context.triggerCharacter === '.' || (context.triggerKind === 0 && document.lineAt(position).text[position.character - 1] === '.');
+
     if (tables) {
       const tableItems: TableCompletionItem[] = [];
 
       const columnItems: ColumnCompletionItem[] = [];
 
-      new Parser().parseString(document);
+      new Parser().parse(document);
       const text = document.getText();
 
       if (triggeredByDot) {

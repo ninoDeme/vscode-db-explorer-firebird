@@ -1,4 +1,5 @@
 import {Range, TextDocument, Position, EndOfLine} from 'vscode';
+import {logger} from '../logger/logger';
 
 export class Parser {
     
@@ -14,12 +15,10 @@ export class Parser {
         this.state = [new StatementStart(this)];
         this.parsed = [];
 
-        console.log(this.parsed);
-        
         while (this.index < this.text.length) {
             this.next();
         }
-        
+
         return this.parsed;
     }
     
@@ -66,6 +65,9 @@ class StatementStart extends BaseState {
 
 class SelectStatement extends BaseState {
     
+    constructor(parser: Parser) {
+        super(parser);
+    }
 }
 
 class Word {
