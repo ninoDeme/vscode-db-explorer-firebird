@@ -25,13 +25,13 @@ export class CompletionProvider implements CompletionItemProvider {
     const items: CompletionItem[] = [];
 
     let triggeredByDot = context.triggerCharacter === '.' || (context.triggerKind === 0 && document.lineAt(position).text[position.character - 1] === '.');
-
+    
+    const _ = new Parser().parse(document);
     if (tables) {
       const tableItems: TableCompletionItem[] = [];
 
       const columnItems: ColumnCompletionItem[] = [];
 
-      new Parser().parse(document);
       const text = document.getText();
 
       if (triggeredByDot) {
