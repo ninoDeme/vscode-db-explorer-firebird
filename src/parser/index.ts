@@ -66,6 +66,9 @@ class Statement extends BaseState {
     flush(state?: State) {
         this.parser.state.splice(this.parser.state.findIndex(el => el === state ?? this, 1))[0];
         this.parser.parsed.push(this);
+        if (this.parser.index < this.parser.text.length && this.parser.state.length === 0) {
+            this.parser.state.push(statement(this.parser));
+        }
     }
     constructor(parser: Parser, start?: number) {
         super(parser, start);
@@ -74,12 +77,12 @@ class Statement extends BaseState {
 
 function statement(parser: Parser, start: number = parser.index) {
     consumeWhiteSpace(parser);
-    const currText = this.parser.currText;
+    const currText = parser.currText;
     if (/^select/i.test(currText)) {
         return new SelectStatement(parser, start);
     }
     else if (/^(;|$)/.test(currText)) {
-        return new EmptyStatement(this.parser);
+        return new EmptyStatement(parser);
     }
     // TODO: Error type that contains position data
     throw new Error('Invalid Statement');
@@ -91,18 +94,32 @@ class SelectStatement extends Statement {
     parse = function() {
         consumeWhiteSpace(this.parser);
         const currText = this.parser.currText;
-        if (/^(\([\s\S]*?\)|[\s\S])+?(?=\s*,|\s+from)/i.test(currText)) {
-            this.parser.state.push(new SelectExpression(this.parser));
+        if (/^from\s/i.test(currText)) {
+            const newFrom = new FromState(this.parser);
+            this.parser.state.push(newFrom);
+            this.from = newFrom;
             return;
         }
-        const end = this.parser.currText.match(/^[\s\S]*?(?=;|$)/)[0];
+        const end = this.parser.currText.match(/^[\s]*?(?=;|$)/)?.[0];
         if (end != null) {
+            if (!this.from) {
+                throw new Error('Missing FROM statement');
+            }
             this.parser.index += end.length;
             this.text = end;
             this.end = this.parser.index;
             this.flush();
+        } else {
+            const newColumn = new SelectExpression(this.parser);
+            this.parser.state.push(newColumn);
+            this.columnList.push(newColumn);
+            return;
         }
     };
+
+    columnList: SelectExpression[] = [];
+
+    from: FromState;
 
     constructor(parser: Parser, start?: number) {
         super(parser, start);
@@ -152,36 +169,60 @@ class EmptyStatement extends Statement {
 class SelectExpression extends BaseState {
     static match = /^[\s\S]+?(?=,|\s+from)/i;
 
-    tokens: [
+    tokens: any[] = [];
 
-    ];
     parse = () => {
         consumeWhiteSpace(this.parser);
-        const expr = this.parser.currText.match(/^(\([\s\S]*?\)|[\s\S])+?(?=\s*,|\s+from)/i)[0];
+        // const expr = this.parser.currText.match(/^(\([\s\S]*?\)|[\s\S])+?(?=\s*,|\s+from)/i)[0];
         let currI = this.parser.index;
         let word = '';
         let cond = true;
-        while (cond) {
+        while (cond && currI < this.parser.text.length) {
             const char = this.parser.text[currI];
-            
-            word += char;
+
+            if (char === '(') {
+                let currChar = '(';
+                while(currChar !== ')') {
+                    currI++;
+                    currChar = this.parser.text[currI];
+                }
+            }
             if (word === '--') {
-                currI += this.parser.text.substring(currI).indexOf('\n');
+                const lineEnd = this.parser.text.indexOf('\n', currI);
+                if (lineEnd === -1) {
+                    currI = this.parser.text.length;
+                } else {
+                    currI += lineEnd;
+                }
                 continue;
             }
             if (char === ',') {
                 cond = false;
             }
+            if (word === 'from') {
+                cond = false;
+                currI -= 4;
+                break;
+            }
+            if (/\s/.test(char)) {
+                if (/\S/.test(word)) {
+                    this.tokens.push(word);
+                }
+                word = '';
+            } else {
+                word += char;
+            }
             currI++;
         }
+        const expr = this.parser.text.substring(this.parser.index, currI);
         this.parser.index += expr.length;
         this.text = expr;
         this.end = this.parser.index;
         this.flush();
-        if (/^\s*from/i.test(this.parser.currText)) {
-            this.parser.state.push(new FromState(this.parser));
-        }
+    };
 
+    flush = () => {
+        this.parser.state.splice(this.parser.state.findIndex(el => el === this, 1));
     };
 }
 

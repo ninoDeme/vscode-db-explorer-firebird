@@ -284,7 +284,7 @@
     "onLanguage:sql"
   ],
   "dependencies": {
-    "node-firebird": "^0.9.8",
+    "node-firebird": "~1.1.5",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
