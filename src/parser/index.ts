@@ -351,10 +351,18 @@ class JoinFrom extends BaseState {
 
     parent: FromState;
     constructor(parser: Parser, parent: FromState) {
-        // TODO: JOIN parse
         super(parser);
         this.parent = parent;
     }
+
+    parse = () => {
+        // TODO: Parse Join
+    }; 
+
+    flush = () => {
+        this.parent.joins.push(this);
+        super.flush();
+    };
 }
 
 const REGULAR_IDENTIFIER = /^[A-z][\w$]{0,62}/;
@@ -363,15 +371,51 @@ const REGULAR_IDENTIFIER = /^[A-z][\w$]{0,62}/;
 class FromState extends BaseState {
 
     // TODO From parse
-    joins: JoinFrom[];
+    joins: JoinFrom[] = [];
+
+    source: Table;
     parse = () => {
         consumeWhiteSpace(this.parser);
-        const expr = this.parser.currText.match(/^[\s\S]*?(?=;|$)/)[0];
-        this.parser.index += expr.length;
-        this.text = expr;
-        this.end = this.parser.index;
-        this.flush();
+        consumeComments(this.parser);
+        if (/^(natural|join|inner|left|right|full)\s/i.test(this.parser.currText)) {
+            this.parser.state.push(new JoinFrom(this.parser, this));
+            return;
+        }
+        const end = this.parser.currText.match(/^[\s]*?(;|$)/)?.[0];
+        if (end != null) {
+            if (!this.source) {
+                throw new Error('Missing source in FROM statement');
+            }
+            this.parser.index += end.length;
+            this.text = end;
+            this.end = this.parser.index;
+            this.flush();
+        } else {
+            // table
+        }
     };
+}
+
+class DerivedTable extends BaseToken {
+    name: string;
+    alias?: string;
+    select: SelectStatement;
+}
+
+class BaseTable extends BaseToken {
+    name: string;
+    alias?: string;
+}
+
+class Procedure extends BaseToken {
+    name: string;
+    alias?: string;
+    args: Token[];
+}
+
+interface Table {
+    name: string;
+    alias?: string;
 }
 
 interface State {
