@@ -1,18 +1,32 @@
 import {Range, TextDocument, Position} from 'vscode';
 import {logger} from '../logger/logger';
 
+class BaseToken implements Token {
+    text: string;
+    start: number;
+    end: number;
+    constructor(token: Partial<Token>) {
+        this.text = token.text;
+        this.start = token.start;
+        this.end = token.end;
+    }
+}
+
 export class Parser {
     
     state: State[] = [];
     parsed: BaseState[] = [];
     text: string;
     index: number = 0;
+    comments: BaseToken[] = [];
 
     get currText() {
         return this.text.substring(this.index);
     }
 
     parse(sql: TextDocument) {
+
+        try {
 
         this.text = sql.getText();
 
@@ -25,14 +39,16 @@ export class Parser {
             this.next();
         }
 
+        console.log(this.parsed);
+        } catch (e) {
+            console.error(e);
+        }
         return;
     }
     
     next() {
         this.state[this.state.length - 1].parse();
     }
-
-
     
 }
 
@@ -41,8 +57,20 @@ function getCharAt(pos: Position, document: TextDocument) {
 }
 
 function consumeWhiteSpace(parser: Parser) {
-    const whitespace = parser.text.match(/^\s+/);
+    const whitespace = parser.currText.match(/^\s+/);
     parser.index += whitespace?.[0].length ?? 0;
+}
+
+function consumeComments(parser: Parser) {
+    let comment: RegExpMatchArray;
+    do {
+        comment = parser.currText.match(/^--.*|\/\*[\s\S]*?\*\//);
+        if (comment?.[0].length) {
+            parser.comments.push(new BaseToken({start: parser.index, end: parser.index + comment[0].length, text: comment[0]}));
+            parser.index += comment[0].length;
+            consumeWhiteSpace(parser);
+        }
+    } while (comment?.[0].length);
 }
 
 class BaseState implements State, Token {
@@ -77,6 +105,7 @@ class Statement extends BaseState {
 
 function statement(parser: Parser, start: number = parser.index) {
     consumeWhiteSpace(parser);
+    consumeComments(parser);
     const currText = parser.currText;
     if (/^select/i.test(currText)) {
         return new SelectStatement(parser, start);
@@ -91,29 +120,51 @@ function statement(parser: Parser, start: number = parser.index) {
 // https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select
 class SelectStatement extends Statement {
     
-    parse = function() {
+    parse = () => {
         consumeWhiteSpace(this.parser);
+        consumeComments(this.parser);
         const currText = this.parser.currText;
-        if (/^from\s/i.test(currText)) {
+        if (/^first\s/i.test(currText)) {
+            if (this.columnList.length > 0) {
+                throw new Error('First must come before column list');
+            }
+            if (this.skip) {
+                throw new Error('"First" must be before "skip"');
+            } 
+            if (this.first) {
+                throw new Error('Duplicate "first" statement');
+            }
+            this.first = new SelectFirst(this.parser);
+        } else if (/^skip\s/i.test(currText)) {
+            if (this.columnList.length > 0) {
+                throw new Error('Skip must come before column list');
+            }
+            if (this.skip) {
+                throw new Error('Duplicate "skip" statement');
+            }
+            this.skip = new SelectSkip(this.parser);
+        } else if (/^from\s/i.test(currText)) {
+            if (this.columnList.length === 0) {
+                throw new Error('No Columns Provided');
+            }
             const newFrom = new FromState(this.parser);
             this.parser.state.push(newFrom);
             this.from = newFrom;
-            return;
-        }
-        const end = this.parser.currText.match(/^[\s]*?(?=;|$)/)?.[0];
-        if (end != null) {
-            if (!this.from) {
-                throw new Error('Missing FROM statement');
-            }
-            this.parser.index += end.length;
-            this.text = end;
-            this.end = this.parser.index;
-            this.flush();
         } else {
-            const newColumn = new SelectExpression(this.parser);
-            this.parser.state.push(newColumn);
-            this.columnList.push(newColumn);
-            return;
+            const end = this.parser.currText.match(/^[\s]*?(;|$)/)?.[0];
+            if (end != null) {
+                if (!this.from) {
+                    throw new Error('Missing FROM statement');
+                }
+                this.parser.index += end.length;
+                this.text = end;
+                this.end = this.parser.index;
+                this.flush();
+            } else {
+                const newColumn = new SelectExpression(this.parser, this);
+                this.parser.state.push(newColumn);
+                this.columnList.push(newColumn);
+            }
         }
     };
 
@@ -121,33 +172,82 @@ class SelectStatement extends Statement {
 
     from: FromState;
 
+    first?: SelectFirst;
+    skip?: SelectSkip;
+
     constructor(parser: Parser, start?: number) {
         super(parser, start);
         this.parser.index += 'select'.length;
     }
 }
 
-class BaseLimitToken implements Limit, Token {
-    startRow: number;
-    endRow: number;
-    text: string;
-    start: number;
-    end: number;
-    constructor(limit: Limit, token: Token) {
-        this.startRow = limit.startRow;
-        this.endRow = limit.startRow;
-        this.text = token.text;
-        this.start = token.start;
-        this.end = token.end;
+// https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-first-skip
+class FirstAndSkip extends BaseToken {
+    delimiter: number | string;
+
+    constructor(parser: Parser) {
+        const start = parser.index;
+        let end: number;
+        parser.index += parser.currText.match(/^(first|skip)/i)?.[0].length;
+        consumeWhiteSpace(parser);
+        consumeComments(parser);
+        let delimiter: string;
+        if (parser.currText.startsWith('(')) {
+            let index = 0;
+            let depth = 0;
+            for (const i of parser.currText) {
+                index++;
+                if (i === '(') {
+                    depth++;
+                } else if (i === ')') {
+                    depth--;
+                }
+                if (depth === 0) break;
+            }
+            if (depth !== 0) {
+                throw new Error('Mismatched parenthesis');
+            }
+            delimiter = parser.currText.slice(0, index);
+            end = parser.index + index;
+        } else if (parser.currText.startsWith(':')) {
+            parser.index++;
+            const identifier = parser.currText.match(REGULAR_IDENTIFIER)?.[0];
+            if (!identifier) {
+                throw new Error('Invalid Parameter');
+            }
+            delimiter = `:${identifier}`;
+            end = parser.index + delimiter.length;
+        } else {
+            delimiter = parser.currText.match(/^\S+/)?.[0];
+            if (!isNaN(parseInt(delimiter))) {
+                if (parseInt(delimiter) < 0) {
+                    throw new Error("Argument can't be negative");
+                }
+                end = parser.index + delimiter.length;
+            } else if (delimiter === '?') {
+                end = parser.index + delimiter.length;
+            } else {
+                throw new Error('invalid parameter');
+            }
+        }
+        parser.index += delimiter.length;
+        super({start, end, text: parser.text.substring(start, end)});
+        this.delimiter = delimiter;
     }
 }
-
-// https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-first-skip
-class SelectFirst extends BaseLimitToken {}
-class SelectSkip extends BaseLimitToken {}
+class SelectFirst extends FirstAndSkip {
+    // constructor(parser: Parser) {
+    //     super(parser);
+    // }
+}
+class SelectSkip extends FirstAndSkip {
+    constructor(parser: Parser) {
+        super(parser);
+    }
+}
 // https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-offsetfetch
-class SelectOffset extends BaseLimitToken {}
-class SelectFetch extends BaseLimitToken {}
+// class SelectOffset extends BaseLimitToken {}
+// class SelectFetch extends BaseLimitToken {}
 
 class EmptyStatement extends Statement {
     parse = () => {
@@ -169,7 +269,8 @@ class EmptyStatement extends Statement {
 class SelectExpression extends BaseState {
     static match = /^[\s\S]+?(?=,|\s+from)/i;
 
-    tokens: any[] = [];
+    public tokens: any[] = [];
+    public parent: SelectStatement;
 
     parse = () => {
         consumeWhiteSpace(this.parser);
@@ -192,8 +293,19 @@ class SelectExpression extends BaseState {
                 if (lineEnd === -1) {
                     currI = this.parser.text.length;
                 } else {
-                    currI += lineEnd;
+                    currI = lineEnd;
                 }
+                word = '';
+                continue;
+            }
+            if (word === '/*') {
+                const commentEnd = this.parser.text.indexOf('*/', currI + 2);
+                if (commentEnd === -1) {
+                    currI = this.parser.text.length;
+                } else {
+                    currI = commentEnd;
+                }
+                word = '';
                 continue;
             }
             if (char === ',') {
@@ -214,6 +326,9 @@ class SelectExpression extends BaseState {
             }
             currI++;
         }
+        if (this.tokens.length === 0) {
+            throw new Error('Empty Column');
+        }
         const expr = this.parser.text.substring(this.parser.index, currI);
         this.parser.index += expr.length;
         this.text = expr;
@@ -224,6 +339,22 @@ class SelectExpression extends BaseState {
     flush = () => {
         this.parser.state.splice(this.parser.state.findIndex(el => el === this, 1));
     };
+
+    constructor(parser: Parser, parent: SelectStatement) {
+        super(parser);
+        this.parent = parent;
+    }
+}
+
+// https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-joins
+class JoinFrom extends BaseState {
+
+    parent: FromState;
+    constructor(parser: Parser, parent: FromState) {
+        // TODO: JOIN parse
+        super(parser);
+        this.parent = parent;
+    }
 }
 
 const REGULAR_IDENTIFIER = /^[A-z][\w$]{0,62}/;
@@ -231,6 +362,8 @@ const REGULAR_IDENTIFIER = /^[A-z][\w$]{0,62}/;
 // https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-from
 class FromState extends BaseState {
 
+    // TODO From parse
+    joins: JoinFrom[];
     parse = () => {
         consumeWhiteSpace(this.parser);
         const expr = this.parser.currText.match(/^[\s\S]*?(?=;|$)/)[0];
@@ -250,20 +383,4 @@ interface Token {
     text: string;
     start: number;
     end: number;
-}
-
-class BaseToken implements Token {
-    text: string;
-    start: number;
-    end: number;
-    constructor(token: Token) {
-        this.text = token.text;
-        this.start = token.start;
-        this.end = token.end;
-    }
-}
-
-interface Limit  {
-    startRow: number | null;
-    endRow: number | null;
 }

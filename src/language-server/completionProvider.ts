@@ -27,6 +27,7 @@ export class CompletionProvider implements CompletionItemProvider {
     let triggeredByDot = context.triggerCharacter === '.' || (context.triggerKind === 0 && document.lineAt(position).text[position.character - 1] === '.');
     
     const _ = new Parser().parse(document);
+
     if (tables) {
       const tableItems: TableCompletionItem[] = [];
 

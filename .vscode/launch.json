@@ -16,7 +16,8 @@
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
             ],
-            "preLaunchTask": "npm: esbuild"
+            "preLaunchTask": "watch",
+            // "preLaunchTask": "npm: esbuild"
         },
         {
             "name": "Extension Tests",
