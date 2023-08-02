@@ -1,3 +1,5 @@
+export const REGULAR_IDENTIFIER = '[A-z][\\w$]{0,62}';
+
 export const PREDICATES = [
     '=',
     '>',

@@ -1,6 +1,6 @@
 import {Range, TextDocument, Position, DiagnosticSeverity} from 'vscode';
 import {logger} from '../logger/logger';
-import {RESERVED_WORDS} from './symbols';
+import {REGULAR_IDENTIFIER, RESERVED_WORDS} from './symbols';
 
 class BaseToken implements Token {
     text: string;
@@ -14,7 +14,7 @@ class BaseToken implements Token {
 }
 
 export class Parser {
-    
+
     state: State[] = [];
     parsed: BaseState[] = [];
     text: string;
@@ -49,11 +49,11 @@ export class Parser {
         }
         return this.parsed;
     }
-    
+
     next() {
         this.state[this.state.length - 1].parse();
     }
-    
+
 }
 
 function getCharAt(pos: Position, document: TextDocument) {
@@ -82,7 +82,7 @@ class BaseState implements State, Token {
     static match: RegExp;
     parse() {
         throw new Error('not implemented');
-    }   
+    }
     flush(state?: State) {
         this.parser.state.splice(this.parser.state.findIndex(el => el === state ?? this, 1));
     }
@@ -112,7 +112,7 @@ class Statement extends BaseState {
     }
 }
 
-function nextToken(parser: Parser): {start: number, end: number} {
+function nextToken(parser: Parser): {start: number, end: number;} {
     const token = parser.currText.match(new RegExp(/^\S*/))?.[0];
     return {start: parser.index, end: parser.index + token.length};
 }
@@ -140,75 +140,89 @@ function statement(parser: Parser, start: number = parser.index, subQuery?: bool
 
 // https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select
 class SelectStatement extends Statement {
-    
+
     parse = () => {
         consumeWhiteSpace(this.parser);
         consumeComments(this.parser);
         const currText = this.parser.currText;
-        if (/^first\s/i.test(currText)) {
-            if (this.columnList.length > 0) {
-                nextTokenError(this.parser, '"FIRST" must come before column list');
-            }
-            if (this.skip) {
-                nextTokenError(this.parser, '"FIRST" must be before "SKIP"');
-            } 
-            if (this.first) {
-                nextTokenError(this.parser, 'Duplicate "FIRST" statement');
-            }
-            this.first = new SelectFirst(this.parser);
-        } else if (/^skip\s/i.test(currText)) {
-            if (this.columnList.length > 0) {
-                nextTokenError(this.parser, '"SKIP" must come before column list');
-            }
-            if (this.skip) {
-                nextTokenError(this.parser, 'Duplicate "SKIP" statement');
-            }
-            this.skip = new SelectSkip(this.parser);
-        } else if (/^from\s/i.test(currText)) {
-            if (this.columnList.length === 0) {
+
+        let end = this.parser.currText.match(/^[\s]*?(;|$)/)?.[0];
+        if (this.subQuery) {
+            if (end != null) {
                 this.parser.problems.push({
-                    start: this.parser.index,
-                    end: this.parser.index,
-                    message: 'No Columns in "SELECT" statement'
+                    start: this.start,
+                    end: this.start + end.length,
+                    message: 'Unclosed Subquery',
+                });
+            } else {
+                end = this.parser.currText.match(/^[\s]*?\)/)?.[0];
+            }
+        }
+        if (end != null) {
+            if (!this.from) {
+                this.parser.problems.push({
+                    start: this.start,
+                    end: this.parser.index + end.length,
+                    message: 'Missing "FROM" expression in "SELECT" statement',
                 });
             }
-            const newFrom = new FromState(this.parser);
-            this.parser.state.push(newFrom);
-            this.from = newFrom;
-        } else {
-            let end = this.parser.currText.match(/^[\s]*?(;|$)/)?.[0];
-            if (this.subQuery) {
-                if (end != null) {
-                    this.parser.problems.push({
-                        start: this.start,
-                        end: this.start + end.length,
-                        message: 'Unclosed Subquery',
-                    });
-                } else {
-                    end = this.parser.currText.match(/^[\s]*?\)/)?.[0];
+            this.parser.index += end.length;
+            this.end = this.parser.index;
+            this.text = this.parser.text.substring(this.start, this.end);
+            this.flush();
+        } else if (this.columnList.length === 0) {
+            if (/^first\s/i.test(currText)) {
+                if (this.skip) {
+                    nextTokenError(this.parser, '"FIRST" must be before "SKIP"');
                 }
-            }
-            if (end != null) {
-                if (!this.from) {
+                if (this.first) {
+                    nextTokenError(this.parser, 'Duplicate "FIRST" statement');
+                }
+                this.first = new SelectFirst(this.parser);
+            } else if (/^skip\s/i.test(currText)) {
+                if (this.skip) {
+                    nextTokenError(this.parser, 'Duplicate "SKIP" statement');
+                }
+                this.skip = new SelectSkip(this.parser);
+            } else if (/^from\s/i.test(currText)) {
+                if (this.columnList.length === 0) {
                     this.parser.problems.push({
-                        start: this.start,
-                        end: this.parser.index + end.length,
-                        message: 'Missing "FROM" expression in "SELECT" statement',
+                        start: this.parser.index,
+                        end: this.parser.index,
+                        message: 'No Columns in "SELECT" statement'
                     });
                 }
-                this.parser.index += end.length;
-                this.end = this.parser.index;
-                this.text = this.parser.text.substring(this.start, this.end);
-                this.flush();
+            } else if (currText.startsWith('*')) {
+                if (this.columnList.length) {
+                    nextTokenError(this.parser, `Columns and select star provided`);
+                }
+                this.star = new SelectStar(this.parser);
             } else {
-                const newColumn = new SelectExpression(this.parser, this);
-                this.parser.state.push(newColumn);
-                this.columnList.push(newColumn);
+                this.addNewColumn();
+            }
+        } else {
+            if (/^from\s/i.test(currText)) {
+                const newFrom = new FromState(this.parser);
+                this.parser.state.push(newFrom);
+                this.from = newFrom;
+            } else if (/^skip\s/i.test(currText)) {
+                nextTokenError(this.parser, '"SKIP" must come before column list');
+            } else if (/^first\s/i.test(currText)) {
+                nextTokenError(this.parser, '"FIRST" must come before column list');
+            } else {
+                nextTokenError(this.parser, 'Unknown Token');
             }
         }
     };
 
-    columnList: SelectExpression[] = [];
+    addNewColumn() {
+        const newColumn = new OutputColumn(this.parser, this);
+        this.parser.state.push(newColumn);
+        this.columnList.push(newColumn);
+    }
+
+    columnList: OutputColumn[] = [];
+    star: SelectStar;
 
     from: FromState;
 
@@ -247,7 +261,7 @@ class FirstAndSkip extends BaseToken {
             if (depth !== 0) {
                 parser.problems.push({
                     start: parser.index,
-                    end: parser.index+1,
+                    end: parser.index + 1,
                     message: 'Unclosed parenthesis'
                 });
             }
@@ -259,7 +273,7 @@ class FirstAndSkip extends BaseToken {
             if (!identifier) {
                 const token = parser.currText.match(/^\S*?/)?.[0] ?? '';
                 parser.problems.push({
-                    start: parser.index-1,
+                    start: parser.index - 1,
                     end: parser.index + token.length,
                     message: `Invalid Parameter: :${token}`
                 });
@@ -271,7 +285,7 @@ class FirstAndSkip extends BaseToken {
             if (!isNaN(parseInt(delimiter))) {
                 if (parseInt(delimiter) < 0) {
                     parser.problems.push({
-                        start: parser.index-1,
+                        start: parser.index - 1,
                         end: parser.index + delimiter.length,
                         message: "Argument can't be negative"
                     });
@@ -281,7 +295,7 @@ class FirstAndSkip extends BaseToken {
                 end = parser.index + delimiter.length;
             } else {
                 parser.problems.push({
-                    start: parser.index-1,
+                    start: parser.index - 1,
                     end: parser.index + delimiter.length,
                     message: `Invalid Token: ${delimiter}`
                 });
@@ -339,85 +353,118 @@ class UnknownStatement extends Statement {
     }
 }
 
-class SelectExpression extends BaseState {
-    static match = /^[\s\S]+?(?=,|\s+from)/i;
+class OutputColumn extends BaseState {
 
-    public tokens: any[] = [];
+    public expression: ValueExpression | IdentifierStar;
     public parent: SelectStatement;
 
     parse() {
         consumeWhiteSpace(this.parser);
-        let currI = this.parser.index;
-        let word = '';
-        let cond = true;
-        while (cond && currI < this.parser.text.length) {
-            const char = this.parser.text[currI];
+        consumeComments(this.parser);
 
-            if (char === '(') {
-                let currChar = '(';
-                while(currChar !== ')') {
-                    currI++;
-                    currChar = this.parser.text[currI];
-                }
+        const isFrom = /^from([^\w$]|$)/.test(this.parser.currText);
+        const isComma = this.parser.currText.startsWith(',');
+        if (isFrom || isComma) {
+            if (isComma) {
+                this.parser.index++;
+                this.parent.addNewColumn();
             }
-            if (word === '--') {
-                const lineEnd = this.parser.text.indexOf('\n', currI);
-                if (lineEnd === -1) {
-                    currI = this.parser.text.length;
-                } else {
-                    currI = lineEnd;
-                }
-                word = '';
-                continue;
+            this.end = this.parser.index;
+            this.text = this.parser.text.substring(this.start, this.end);
+            if (!this.expression) {
+                this.parser.problems.push({
+                    start: this.start,
+                    end: this.end,
+                    severity: DiagnosticSeverity.Error,
+                    message: `Empty Column Expression`
+                });
             }
-            if (word === '/*') {
-                const commentEnd = this.parser.text.indexOf('*/', currI + 2);
-                if (commentEnd === -1) {
-                    currI = this.parser.text.length;
-                } else {
-                    currI = commentEnd;
-                }
-                word = '';
-                continue;
-            } else if (word === 'from') {
-                cond = false;
-                currI -= 4;
-                break;
-            } else if (char === ',') {
-                cond = false;
-            }
-            if (/\s|;|\)|^$/.test(char) || cond === false) {
-                if (/\S/.test(word)) {
-                    this.tokens.push(word);
-                }
-                word = '';
-            } else {
-                word += char;
-            }
-            currI++;
+            this.flush();
+        } else if (IdentifierStar.match.test(this.parser.currText)) {
+            this.expression = new IdentifierStar(this.parser);
+            this.parser.state.push(this.expression);
+        } else {
+            this.expression = new ValueExpression(this.parser);
+            this.parser.state.push(this.expression);
         }
-        const expr = this.parser.text.substring(this.parser.index, currI);
-        this.parser.index += expr.length;
-        this.text = expr;
-        this.end = this.parser.index;
-        if (this.tokens.length === 0) {
-            this.parser.problems.push({
-                start: this.start,
-                end: this.end,
-                severity: DiagnosticSeverity.Error,
-                message: `Empty Column Expression`
-            });
-        }
-        this.flush();
-    }
-
-    flush() {
-        this.parser.state.splice(this.parser.state.findIndex(el => el === this, 1));
     }
 
     constructor(parser: Parser, parent: SelectStatement) {
         super(parser);
+        this.start = this.parser.index;
         this.parent = parent;
+    }
+}
+
+class ValueExpression extends BaseState {
+
+    parse() {
+        consumeWhiteSpace(this.parser);
+        consumeComments(this.parser);
+
+        if (!this.start) this.start = this.parser.index;
+
+        const currText = this.parser.currText;
+
+        if (currText.startsWith('(')) {
+            this.parser.index++;
+            this.depth++;
+        } else if (currText.startsWith(')')) {
+            this.parser.index++;
+            this.depth--;
+        } else if (this.depth) {
+            this.parser.index += currText.match(/[()]|$/).index;
+        } else if (/^(;|$|,|from(?=[^\w$]|$)|\))/.test(currText)){
+            this.end = this.parser.index;
+            this.text = this.parser.text.substring(this.start, this.end);
+            this.flush();
+        } else {
+            const start = this.parser.index;
+            const res = currText.match(new RegExp(`^${REGULAR_IDENTIFIER}|\\s+`));
+            if (res?.[0]) {
+                this.parser.index += res?.[0].length;
+                this.tokens.push(new BaseToken({start, text: res?.[0], end: this.parser.index}));
+            } else {
+                this.parser.index++;
+            }
+
+        }
+    }
+    
+    private tokens: Token[];
+    private depth: number = 0;
+}
+
+class IdentifierStar extends BaseState {
+
+    static match = new RegExp(`^${REGULAR_IDENTIFIER}\\.\\*(?=\\)|$|,|;|\\s)`);
+
+    parse() {
+        const text = this.parser.currText.match(IdentifierStar.match)?.[0];
+        this.start = this.parser.index;
+        this.parser.index += text.length;
+        this.end = this.parser.index;
+        this.text = text;
+
+        consumeWhiteSpace(this.parser);
+        consumeComments(this.parser);
+        if (!/^(from(?=[^\w$]|$)|,|\)|$|;)/.test(this.parser.currText)) {
+            nextTokenError(this.parser, `Unknown Token`);
+        }
+        this.flush();
+    }
+}
+
+class SelectStar extends BaseToken {
+    constructor(parser: Parser) {
+        super({
+            start: parser.index,
+            end: ++parser.index,
+            text: '*'
+        });
+        if (/^[^;,\s]/.test(parser.currText)) {
+            nextTokenError(parser, `Invalid Token`);
+        }
     }
 }
 
@@ -433,15 +480,13 @@ class JoinFrom extends BaseState {
     parse() {
         // TODO: Parse Join
         throw new Error('not implemented');
-    } 
+    }
 
     flush() {
         this.parent.joins.push(this);
         super.flush();
     }
 }
-
-const REGULAR_IDENTIFIER = '[A-z][\\w$]{0,62}';
 
 // https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-from
 class FromState extends BaseState {
@@ -453,7 +498,7 @@ class FromState extends BaseState {
         consumeWhiteSpace(this.parser);
         consumeComments(this.parser);
 
-        if (/^(natural|join|inner|left|right|full)\s/i.test(this.parser.currText)) {
+        if (/^(natural|join|inner|left|right|full)[^\w$]|$/i.test(this.parser.currText)) {
             this.parser.state.push(new JoinFrom(this.parser, this));
         } else if (this.joins.length || this.source) {
             this.end = this.parser.index;
@@ -481,14 +526,14 @@ function table(parser: Parser) {
     }
     else if (currText.startsWith('(')) {
         return new DerivedTable(parser);
-    } else if (new RegExp(`^${REGULAR_IDENTIFIER}(\\s|;|$)`).test(currText)) {
+    } else if (new RegExp(`^${REGULAR_IDENTIFIER}([^\\w$]|$)`).test(currText)) {
         return new BaseTable(parser);
     }
     nextTokenError(parser, 'Invalid Token');
     return new UnknownTable(parser);
 }
 
-class BaseTable extends BaseState implements Table  {
+class BaseTable extends BaseState implements Table {
     name: string;
     alias?: string;
 
@@ -559,7 +604,7 @@ class UnknownTable extends BaseTable {
             hasAS = true;
         }
 
-        const token = this.parser.currText.match(new RegExp(`^[^;|\\s]`))?.[0];
+        const token = this.parser.currText.match(new RegExp(`^${REGULAR_IDENTIFIER}`))?.[0];
 
         if (token && !RESERVED_WORDS.includes(token.toUpperCase())) {
             if (hasAS) {
@@ -588,7 +633,7 @@ class DerivedTable extends BaseTable implements State {
                 this.text = this.parser.text.substring(this.start, this.end);
                 this.flush();
             } else {
-                throw new Error('Unknown Token');
+                nextTokenError(this.parser, `Unknown Token`);
             }
         }
     }
@@ -626,5 +671,5 @@ interface Problem {
     start: number;
     end: number;
     message: string;
-    severity?: DiagnosticSeverity
+    severity?: DiagnosticSeverity;
 }
