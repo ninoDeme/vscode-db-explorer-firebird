@@ -1,4 +1,33 @@
 export const REGULAR_IDENTIFIER = '[A-z][\\w$]{0,62}';
+export const NON_REGULAR_IDENTIFIER = '"([^"]{1,63}?) *"';
+
+const SPECIAL_CHARACTERS = [
+    '"',
+    '%',
+    '&',
+    '\'',
+    '(',
+    ')',
+    '*',
+    '+',
+    ',',
+    '-',
+    '.',
+    '/',
+    ':',
+    ';',
+    '<',
+    '=',
+    '>',
+    '?',
+    '[',
+    ']',
+    '^',
+    '{',
+    '}'
+];
+export const SPECIAL_CHARACTERS_REGEX = `["%&'()*+,\\-./:;<=>?\\[\\]^{}]`;
+export const SPECIAL_CHARACTERS_REGEX2 = `("|%|&|'|\\(|\\)|\\*|\\+|,|-|\\.|\\/|:|;|<|=|>|\\?|\\[|\\]|\\^|{|})`;
 
 export const PREDICATES = [
     '=',

@@ -354,11 +354,16 @@ class UnknownStatement extends Statement {
     }
 }
 
+// https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref40/firebird-40-language-reference.html#fblangref40-dml-select-column-list
 class OutputColumn extends BaseState {
 
     public expression: ValueExpression | IdentifierStar;
     public parent: SelectStatement;
 
+    /*
+        <output_column> ::= <qualifier>.* 
+                          | <value_expression> [COLLATE collation] [[AS] alias]
+     */
     parse() {
         consumeWhiteSpace(this.parser);
         consumeComments(this.parser);
@@ -401,6 +406,16 @@ class OutputColumn extends BaseState {
 
 class ValueExpression extends BaseState {
 
+    /*
+    <value_expression> ::= [<qualifier>.]col_name
+                         | [<qualifier>.]selectable_SP_outparm
+                         | <literal>
+                         | <context-variable>
+                         | <function-call> ( <normal_function> | <aggregate_function> | <window_function> )
+                         | <single-value-subselect>
+                         | <CASE-construct>
+                         | any other expression returning a single value of a Firebird data type or NULL
+    */
     parse() {
         consumeWhiteSpace(this.parser);
         consumeComments(this.parser);
