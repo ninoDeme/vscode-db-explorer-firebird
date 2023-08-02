@@ -211,6 +211,7 @@ class SelectStatement extends Statement {
                 nextTokenError(this.parser, '"FIRST" must come before column list');
             } else {
                 nextTokenError(this.parser, 'Unknown Token');
+                this.parser.index += currText.match(/^(:?[\w$]+|$|.)/)?.[0]?.length ?? 1;
             }
         }
     };
@@ -367,7 +368,6 @@ class OutputColumn extends BaseState {
         if (isFrom || isComma) {
             if (isComma) {
                 this.parser.index++;
-                this.parent.addNewColumn();
             }
             this.end = this.parser.index;
             this.text = this.parser.text.substring(this.start, this.end);
@@ -380,6 +380,9 @@ class OutputColumn extends BaseState {
                 });
             }
             this.flush();
+            if (isComma) {
+                this.parent.addNewColumn();
+            }
         } else if (IdentifierStar.match.test(this.parser.currText)) {
             this.expression = new IdentifierStar(this.parser);
             this.parser.state.push(this.expression);
@@ -420,7 +423,7 @@ class ValueExpression extends BaseState {
             this.flush();
         } else {
             const start = this.parser.index;
-            const res = currText.match(new RegExp(`^${REGULAR_IDENTIFIER}|\\s+`));
+            const res = currText.match(new RegExp(`^:?(${REGULAR_IDENTIFIER}|[^,;)\\S]+)`));
             if (res?.[0]) {
                 this.parser.index += res?.[0].length;
                 this.tokens.push(new BaseToken({start, text: res?.[0], end: this.parser.index}));
@@ -431,7 +434,7 @@ class ValueExpression extends BaseState {
         }
     }
     
-    private tokens: Token[];
+    private tokens: Token[] = [];
     private depth: number = 0;
 }
 
@@ -498,7 +501,7 @@ class FromState extends BaseState {
         consumeWhiteSpace(this.parser);
         consumeComments(this.parser);
 
-        if (/^(natural|join|inner|left|right|full)[^\w$]|$/i.test(this.parser.currText)) {
+        if (/^(natural|join|inner|left|right|full)([^\w$]|$)/i.test(this.parser.currText)) {
             this.parser.state.push(new JoinFrom(this.parser, this));
         } else if (this.joins.length || this.source) {
             this.end = this.parser.index;
@@ -554,7 +557,7 @@ class BaseTable extends BaseState implements Table {
         consumeComments(this.parser);
 
         let hasAS = false;
-        if (this.parser.currText.match(/^as\s/i)) {
+        if (this.parser.currText.match(/^as([^\w$]|$)/i)) {
             this.parser.index += 2;
             consumeWhiteSpace(this.parser);
             consumeComments(this.parser);
@@ -567,12 +570,20 @@ class BaseTable extends BaseState implements Table {
             this.alias = token;
         } else {
             if (hasAS) {
-                this.parser.problems.push({
-                    start: this.parser.index,
-                    end: this.parser.index + token.length,
-                    message: `Invalid alias, ${token} is a reserved keyword`
-                });
-                this.alias = token;
+                if (token) {
+                    this.parser.problems.push({
+                        start: this.parser.index,
+                        end: this.parser.index + token.length,
+                        message: `Invalid alias, ${token} is a reserved keyword`
+                    });
+                    this.alias = token;
+                } else {
+                    this.parser.problems.push({
+                        start: this.parser.index,
+                        end: this.parser.index,
+                        message: `Missing or invalid Alias`
+                    });
+                }
             }
         }
         this.parser.index += (this.alias ?? '').length;
