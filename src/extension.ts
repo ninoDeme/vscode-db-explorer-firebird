@@ -7,10 +7,10 @@ import { connectionPicker } from "./shared/connection-picker";
 import { Utility } from "./shared/utility";
 import { Global } from "./shared/global";
 import { logger } from "./logger/logger";
-import { KeywordsDb } from "./language-server/db-words.provider";
+import { KeywordsDb } from "./language-server-client/db-words.provider";
 import QueryResultsView from "./result-view";
 import MockData from "./mock-data/mock-data";
-import LanguageServer from "./language-server";
+import LanguageServer from "./language-server-client";
 
 export function activate(context: ExtensionContext) {
   logger.info(`Activating extension ...`);
@@ -27,7 +27,7 @@ export function activate(context: ExtensionContext) {
   );
 
   /* initialize providers */
-  const firebirdLanguageServer = new LanguageServer();
+  const firebirdLanguageServer = new LanguageServer(context);
   const firebirdDatabaseWords = new KeywordsDb();
   const firebirdTreeDataProvider = new FirebirdTreeDataProvider(context);
   const firebirdMockData = new MockData(context.extensionPath);
