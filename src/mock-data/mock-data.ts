@@ -2,7 +2,7 @@ import { Disposable, Uri, ViewColumn, WebviewPanel, WebviewPanelOptions, Webview
 import { dirname, join } from "path";
 import { readFile } from "fs";
 import { logger } from "../logger/logger";
-import { Utility } from "../shared/utility";
+import { Driver } from "../shared/utility";
 
 export interface Message {
   command: string;
@@ -12,7 +12,7 @@ export interface Message {
 export default class MockData implements Disposable {
   private resourceScheme = "vscode-resource";
   private disposable?: Disposable;
-  private resourcesPath: string;
+  public resourcesPath: string;
   private panel: WebviewPanel | undefined;
   private htmlCache: { [path: string]: string };
 
@@ -46,16 +46,16 @@ export default class MockData implements Disposable {
     this.readWithCache(htmlPath, (html: string) => {
       if (this.panel) {
         // little hack to make the html unique so that the webview is reloaded
-        html = html.replace(/\<\/body\>/, `<div id="${this.randomString(8)}"></div></body>`);
+        html = html.replace(/<\/body>/, `<div id="${this.randomString(8)}"></div></body>`);
         this.panel.webview.html = html;
       }
     });
   }
 
   private init() {
-    let subscriptions = [];
+    const subscriptions = [];
 
-    let options: WebviewPanelOptions & WebviewOptions = {
+    const options: WebviewPanelOptions & WebviewOptions = {
       enableScripts: true,
       retainContextWhenHidden: false, // we dont need to keep the state
       // localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
@@ -91,10 +91,10 @@ export default class MockData implements Disposable {
   }
 
   private replaceUris(html: string, htmlPath: string) {
-    let basePath = Uri.parse(dirname(htmlPath))
+    const basePath = Uri.parse(dirname(htmlPath))
       .with({ scheme: this.resourceScheme })
       .toString();
-    let regex = /(href|src)\=\"(.+?)\"/g;
+    const regex = /(href|src)="(.+?)"/g;
     html = html.replace(regex, `$1="${basePath + "$2"}"`);
     return html;
   }
@@ -115,7 +115,7 @@ export default class MockData implements Disposable {
       });
     }
     if (message.command === "gotData") {
-      Utility.createSQLTextDocument(`execute block as begin\n${message.data}end`);
+      Driver.createSQLTextDocument(`execute block as begin\n${message.data}end`);
     }
 
     if (message.command === "error") {

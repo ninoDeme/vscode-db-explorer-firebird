@@ -2,6 +2,7 @@ import { workspace, WorkspaceConfiguration } from "vscode";
 import { Options } from "../interfaces";
 import { Level, logger } from "../logger/logger";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const properties = require("../../package.json").contributes.configuration.properties;
 
 export function getOptions() {
@@ -11,7 +12,8 @@ export function getOptions() {
     codeCompletionKeywords: _codeCompletionKeywords(),
     codeCompletionDatabase: _codeCompletionDatabase(),
     logLevel: _logLevel(),
-    recordsPerPage: _recordsPerPage()
+    recordsPerPage: _recordsPerPage(),
+    useNativeDriver: _useNativeDriver()
   } as Options;
 }
 
@@ -66,6 +68,17 @@ function _codeCompletionDatabase(): boolean {
   }
 }
 
+function _useNativeDriver(): boolean {
+  const useNativeDriverConf: any = getConfig().get("useNativeDriver");
+  const useNativeDriver: boolean = properties["firebird.useNativeDriver"]["default"];
+
+  if (typeof useNativeDriverConf !== "boolean") {
+    logger.error("Invalid value detected in Use Native Client settings. Fallback to default value.");
+    return useNativeDriver;
+  } else {
+    return useNativeDriverConf;
+  }
+}
 function _logLevel(): string {
   const logLevelConf: any = getConfig().get("logLevel");
   const logLevel: string = properties["firebird.logLevel"]["default"];

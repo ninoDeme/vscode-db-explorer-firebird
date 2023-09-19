@@ -29,14 +29,14 @@
     "url": "https://github.com/mvitlov"
   },
   "publisher": "ninoDeme",
-  "main": "./out/extension",
+  "main": "./out/extension.js",
   "scripts": {
     "compile": "tsc -p ./",
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "esbuild": "npm run esbuild-base -- --sourcemap",
-    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-    "watch": "tsc -watch -p ./"
+    "vscode:prepublish": "npm run compile",
+    "esbuild-base": "rimraf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --external:node-firebird-driver-api",
+    "build": "npm run -S esbuild-base -- --sourcemap",
+    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "tsc-watch": "tsc -watch -p ./"
   },
   "contributes": {
     "commands": [
@@ -146,6 +146,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable code completion for Firebird Database table and field names."
+        },
+        "firebird.useNativeDriver": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use native driver instead of the node based driver (required for wire encrypted databases)"
         },
         "firebird.logLevel": {
           "type": "string",
@@ -285,6 +290,9 @@
   ],
   "dependencies": {
     "node-firebird": "^0.9.8",
+    "node-firebird-driver": "^3.1.0",
+    "node-firebird-driver-api": "^3.1.0",
+    "node-firebird-driver-native": "^3.1.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -297,6 +305,7 @@
     "@vscode/test-electron": "^2.2.3",
     "esbuild": "^0.17.8",
     "eslint": "^8.34.0",
+    "rimraf": "5.0.1",
     "typescript": "^4.0.3"
   },
   "engines": {

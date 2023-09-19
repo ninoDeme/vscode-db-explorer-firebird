@@ -5,4 +5,5 @@ export interface Options {
   codeCompletionDatabase: boolean;
   logLevel: string;
   recordsPerPage: string;
+  useNativeDriver: boolean;
 }

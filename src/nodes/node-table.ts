@@ -4,7 +4,7 @@ import { NodeField, NodeInfo } from ".";
 import { ConnectionOptions, FirebirdTree, Options } from "../interfaces";
 import { selectAllRecordsQuery, tableInfoQuery, dropTableQuery } from "../shared/queries";
 import { Global } from "../shared/global";
-import { Utility } from "../shared/utility";
+import { Driver } from "../shared/utility";
 import { logger } from "../logger/logger";
 import MockData from "../mock-data/mock-data";
 
@@ -27,9 +27,9 @@ export class NodeTable implements FirebirdTree {
   public async getChildren(): Promise<any> {
     const qry = tableInfoQuery(this.table);
 
-    return Utility.createConnection(this.dbDetails)
+    return Driver.client.createConnection(this.dbDetails)
       .then(connection => {
-        return Utility.queryPromise<any[]>(connection, qry)
+        return Driver.client.queryPromise<any[]>(connection, qry)
           .then(fields => {
             return fields.map<NodeField>(field => {
               return new NodeField(field, this.table, this.dbDetails);
@@ -53,7 +53,7 @@ export class NodeTable implements FirebirdTree {
 
     Global.activeConnection = this.dbDetails;
 
-    return Utility.runQuery(qry, this.dbDetails)
+    return Driver.runQuery(qry, this.dbDetails)
       .then(result => {
         return result;
       })
@@ -69,7 +69,7 @@ export class NodeTable implements FirebirdTree {
     const qry = selectAllRecordsQuery(this.table.trim());
     Global.activeConnection = this.dbDetails;
 
-    return Utility.runQuery(qry, this.dbDetails)
+    return Driver.runQuery(qry, this.dbDetails)
       .then(result => {
         return result;
       })
@@ -84,7 +84,7 @@ export class NodeTable implements FirebirdTree {
     const qry = dropTableQuery(this.table.trim());
     Global.activeConnection = this.dbDetails;
 
-    Utility.runQuery(qry, this.dbDetails)
+    Driver.runQuery(qry, this.dbDetails)
       .then(results => {
         logger.info(results[0].message);
         logger.showInfo(results[0].message);
@@ -96,8 +96,8 @@ export class NodeTable implements FirebirdTree {
   }
 
   public async generateMockData(firebirdMockData: MockData, config: Options) {
-    let fields = [];
-    let apiKey = config.mockarooApiKey;
+    const fields = [];
+    const apiKey = config.mockarooApiKey;
 
     if (!apiKey) {
       logger.error(

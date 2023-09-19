@@ -5,7 +5,7 @@ import { ConnectionOptions, FirebirdTree } from "../interfaces";
 import { selectAllFieldRecordsQuery } from "../shared/queries";
 import { logger } from "../logger/logger";
 import { Global } from "../shared/global";
-import { Utility } from "../shared/utility";
+import { Driver } from "../shared/utility";
 
 export class NodeField implements FirebirdTree {
   decoder: TextDecoder;
@@ -81,7 +81,7 @@ export class NodeField implements FirebirdTree {
     const qry = selectAllFieldRecordsQuery(this.field.FIELD_NAME, this.table.trim());
     Global.activeConnection = this.dbDetails;
 
-    return Utility.runQuery(qry, this.dbDetails)
+    return Driver.runQuery(qry, this.dbDetails)
       .then(result => {
         return result;
       })

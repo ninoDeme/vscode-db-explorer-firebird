@@ -4,7 +4,7 @@ import { FirebirdTreeDataProvider } from "./firebirdTreeDataProvider";
 import { NodeHost, NodeDatabase, NodeTable, NodeField } from "./nodes";
 import { Options, FirebirdTree } from "./interfaces";
 import { connectionPicker } from "./shared/connection-picker";
-import { Utility } from "./shared/utility";
+import { Driver } from "./shared/utility";
 import { Global } from "./shared/global";
 import { logger } from "./logger/logger";
 import { KeywordsDb } from "./language-server/db-words.provider";
@@ -18,10 +18,12 @@ export function activate(context: ExtensionContext) {
   /* load configuration and reload every time it's changed */
   logger.info(`Loading configuration...`);
   let config: Options = getOptions();
+  Driver.setClient(config.useNativeDriver);
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(() => {
       logger.debug("Configuration changed. Reloading configuration...");
       config = getOptions();
+      Driver.setClient(config.useNativeDriver);
       commands.executeCommand("firebird.explorer.refresh");
     })
   );
@@ -65,7 +67,7 @@ export function activate(context: ExtensionContext) {
   /* EXPLORER TOOLBAR: create new sql document */
   context.subscriptions.push(
     commands.registerCommand("firebird.explorer.newSqlDocument", () => {
-      Utility.createSQLTextDocument()
+      Driver.createSQLTextDocument()
         .then(_res => {
           logger.info("New SQL document created...");
         })
@@ -136,7 +138,7 @@ export function activate(context: ExtensionContext) {
   /* COMMAND: run document query */
   context.subscriptions.push(
     commands.registerCommand("firebird.runQuery", () => {
-      Utility.runQuery()
+      Driver.runQuery()
         .then(res => {
           if (res[0] && "message" in res[0]) {
             logger.info(res[0].message);

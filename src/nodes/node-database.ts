@@ -3,13 +3,15 @@ import { join } from "path";
 import { NodeTable, NodeInfo } from "./";
 import { ConnectionOptions, FirebirdTree } from "../interfaces";
 import { getOptions, Constants } from "../config";
-import { Utility } from "../shared/utility";
+import { Driver } from "../shared/utility";
 import { Global } from "../shared/global";
 import { FirebirdTreeDataProvider } from "../firebirdTreeDataProvider";
 import { databaseInfoQry, getTablesQuery } from "../shared/queries";
 import { logger } from "../logger/logger";
 
+
 export class NodeDatabase implements FirebirdTree {
+
   constructor(private readonly dbDetails: ConnectionOptions) {}
 
   // list databases grouped by host names
@@ -33,23 +35,23 @@ export class NodeDatabase implements FirebirdTree {
   }
 
   // list database tables
-  public async getChildren(): Promise<any> {
-    let tablesQry = getTablesQuery(getOptions().maxTablesCount);
+  public async getChildren(): Promise<FirebirdTree[]> {
+    const tablesQry = getTablesQuery(getOptions().maxTablesCount);
 
-    return Utility.createConnection(this.dbDetails)
-      .then(connection => {
-        return Utility.queryPromise<any[]>(connection, tablesQry)
-          .then(tables => {
-            return tables.map<NodeTable>(table => {
-              return new NodeTable(this.dbDetails, table.TABLE_NAME);
-            });
-          })
-          .catch(err => {
-            return [new NodeInfo(err)];
+    return Driver.client.createConnection(this.dbDetails)
+      .then(async connection => {
+        try {
+          const tables = await Driver.client.queryPromise<any>(connection, tablesQry);
+          return tables.map<NodeTable>(table => {
+            return new NodeTable(this.dbDetails, table.TABLE_NAME);
           });
+        } catch (err) {
+          return [new NodeInfo(err)];
+        }
       })
       .catch(err => {
         logger.error(err);
+        return [new NodeInfo(err)];
       });
   }
 
@@ -60,7 +62,7 @@ export class NodeDatabase implements FirebirdTree {
     const qry = databaseInfoQry;
     Global.activeConnection = this.dbDetails;
 
-    return Utility.runQuery(qry, this.dbDetails)
+    return Driver.runQuery(qry, this.dbDetails)
       .then(result => {
         return result;
       })
@@ -71,7 +73,7 @@ export class NodeDatabase implements FirebirdTree {
 
   // create new sql document and set active database
   public async newQuery(): Promise<void> {
-    Utility.createSQLTextDocument()
+    Driver.createSQLTextDocument()
       .then(res => {
         if (res) {
           this.setActive();
