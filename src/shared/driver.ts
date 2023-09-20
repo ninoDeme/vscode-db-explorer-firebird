@@ -3,7 +3,8 @@ import * as Firebird from "node-firebird";
 import {Global} from "./global";
 import {ConnectionOptions} from "../interfaces";
 import {logger} from "../logger/logger";
-import {Attachment, createNativeClient, getDefaultLibraryFilename} from 'node-firebird-driver-native';
+import {Attachment, ResultSet, createNativeClient, getDefaultLibraryFilename} from 'node-firebird-driver-native';
+import {simpleCallbackToPromise} from './utils';
 
 export class Driver {
 
@@ -98,20 +99,16 @@ export class Driver {
             }
           });
         });
-        this.client.detach(connection);
         logger.info("Finished Firebird query, displaying results... ");
         return result;
       } else {
-        this.client.detach(connection);
         // because node-firebird plugin doesn't have callback on successfull ddl statements (test further)
         logger.info("Finished Firebird query.");
         const ddl = this.constructResponse(sql);
         return ([{message: `${ddl} command executed successfully!`}]);
       }
-    } catch (err) {
+    } finally {
       this.client.detach(connection);
-      throw err;
-
     }
   }
 
@@ -124,13 +121,12 @@ export interface ClientI<K extends Firebird.Database | Attachment> {
 }
 
 export class NodeClient implements ClientI<Firebird.Database> {
-  public queryPromise<T>(connection: Firebird.Database, sql: string): Promise<T[]> {
+  public queryPromise<T>(connection: Firebird.Database, sql: string, args: any[] = []): Promise<T[]> {
     return new Promise((resolve, reject) => {
-      connection.query(sql, [], (err: any, rows: any) => {
+      connection.query(sql, args, (err: any, rows: any) => {
         if (err) {
-          reject("Error queryPromise=======: " + err.message);
+          reject("Error queryPromise: " + err.message);
         } else {
-          connection.detach();
           resolve(rows);
         }
       });
@@ -150,7 +146,9 @@ export class NodeClient implements ClientI<Firebird.Database> {
   }
 
   public async detach(connection: Firebird.Database) {
-    connection.detach();
+    if (connection) {
+      await simpleCallbackToPromise((callback) => connection.detach(callback));
+    }
   }
 }
 
@@ -160,14 +158,19 @@ export class NativeClient implements ClientI<Attachment> {
       throw new Error("Invalid Connection");
     }
     const trans = await connection.startTransaction();
+    let res: ResultSet;
     try {
-      const res = await connection.executeQuery(trans, sql);
+      res = await connection.executeQuery(trans, sql);
       const result = await res.fetchAsObject<T>();
-      trans.commit();
+      await res.close();
+      await trans.commit();
       return result;  
     } catch (err) {
+      if (res?.isValid) {
+        await res.close();
+      }
       if (trans.isValid) {
-        trans.rollback;
+        await trans.rollback();
       }
       throw err;
     }
@@ -181,6 +184,10 @@ export class NativeClient implements ClientI<Attachment> {
   }
 
   public async detach(connection: Attachment) {
-    connection.disconnect();
+    if (connection.isValid) {
+      await connection.disconnect();
+    } else {
+      logger.debug("Called detach on an invalid connection");
+    }
   }
 }

@@ -3,7 +3,7 @@ import { getOptions } from '../config';
 import { getTablesQuery, fieldsQuery } from '../shared/queries';
 import { ConnectionOptions, Schema } from '../interfaces';
 import { logger } from '../logger/logger';
-import { Driver } from '../shared/utility';
+import { Driver } from '../shared/driver';
 
 type ResultSet = Array<any>;
 

@@ -5,7 +5,7 @@ import { ConnectionOptions, FirebirdTree } from "../interfaces";
 import { selectAllFieldRecordsQuery } from "../shared/queries";
 import { logger } from "../logger/logger";
 import { Global } from "../shared/global";
-import { Driver } from "../shared/utility";
+import { Driver } from "../shared/driver";
 
 export class NodeField implements FirebirdTree {
   decoder: TextDecoder;

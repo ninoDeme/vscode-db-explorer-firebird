@@ -2,7 +2,7 @@ import { Disposable, Uri, ViewColumn, WebviewPanel, WebviewPanelOptions, Webview
 import { dirname, join } from "path";
 import { readFile } from "fs";
 import { logger } from "../logger/logger";
-import { Driver } from "../shared/utility";
+import { Driver } from "../shared/driver";
 
 export interface Message {
   command: string;

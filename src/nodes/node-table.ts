@@ -4,7 +4,7 @@ import { NodeField, NodeInfo } from ".";
 import { ConnectionOptions, FirebirdTree, Options } from "../interfaces";
 import { selectAllRecordsQuery, tableInfoQuery, dropTableQuery } from "../shared/queries";
 import { Global } from "../shared/global";
-import { Driver } from "../shared/utility";
+import { Driver } from "../shared/driver";
 import { logger } from "../logger/logger";
 import MockData from "../mock-data/mock-data";
 
@@ -83,7 +83,7 @@ export class NodeTable implements FirebirdTree {
 
     const qry = dropTableQuery(this.table.trim());
     Global.activeConnection = this.dbDetails;
-
+  
     Driver.runQuery(qry, this.dbDetails)
       .then(results => {
         logger.info(results[0].message);

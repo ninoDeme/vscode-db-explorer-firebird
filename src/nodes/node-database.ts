@@ -3,7 +3,7 @@ import { join } from "path";
 import { NodeTable, NodeInfo } from "./";
 import { ConnectionOptions, FirebirdTree } from "../interfaces";
 import { getOptions, Constants } from "../config";
-import { Driver } from "../shared/utility";
+import { Driver } from "../shared/driver";
 import { Global } from "../shared/global";
 import { FirebirdTreeDataProvider } from "../firebirdTreeDataProvider";
 import { databaseInfoQry, getTablesQuery } from "../shared/queries";

@@ -4,7 +4,8 @@ import { FirebirdTreeDataProvider } from "./firebirdTreeDataProvider";
 import { NodeHost, NodeDatabase, NodeTable, NodeField } from "./nodes";
 import { Options, FirebirdTree } from "./interfaces";
 import { connectionPicker } from "./shared/connection-picker";
-import { Driver } from "./shared/utility";
+import { Driver } from "./shared/driver";
+import * as vscode from 'vscode';
 import { Global } from "./shared/global";
 import { logger } from "./logger/logger";
 import { KeywordsDb } from "./language-server/db-words.provider";
@@ -149,7 +150,7 @@ export function activate(context: ExtensionContext) {
           }
         })
         .catch(error => {
-          logger.error(error.message);
+          logger.error(error.message ?? error);
           if (error.notify) {
             logger.showError(error.message, error.options || []).then(selected => {
               if (selected === "New SQL Document") {
@@ -221,8 +222,11 @@ export function activate(context: ExtensionContext) {
 
   /* COMMAND table node: drop selected table */
   context.subscriptions.push(
-    commands.registerCommand("firebird.table.dropTable", (tableNode: NodeTable) => {
-      tableNode.dropTable();
+    commands.registerCommand("firebird.table.dropTable", async (tableNode: NodeTable) => {
+      const answer = await vscode.window.showInformationMessage("Do you really want to drop this table?", "Yes", "No");
+      if (answer === "Yes") {
+        tableNode.dropTable();
+      }
     })
   );
 
