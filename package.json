@@ -31,10 +31,11 @@
   "publisher": "ninoDeme",
   "main": "./out/extension.js",
   "scripts": {
-    "compile": "tsc -p ./",
+    "tsc-compile": "tsc -p ./",
     "vscode:prepublish": "npm run compile",
     "esbuild-base": "rimraf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild-build": "npm run -S esbuild-base -- --sourcemap",
+    "compile": "npm run -S esbuild-build && copy-folder ./node_modules/node-firebird-native-api/build/Release/ out/Release",
     "watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "tsc-watch": "tsc -watch -p ./"
   },
@@ -302,6 +303,7 @@
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "@typescript-eslint/parser": "^5.52.0",
     "@vscode/test-electron": "^2.2.3",
+    "copy-folder-util": "^1.1.1",
     "esbuild": "^0.17.8",
     "eslint": "^8.34.0",
     "rimraf": "5.0.1",

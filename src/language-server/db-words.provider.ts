@@ -10,9 +10,7 @@ type ResultSet = Array<any>;
 export class KeywordsDb {
     public getSchema(): Promise<Schema.Database> {
         try {
-            if (!Global.activeConnection) {
-                return Promise.resolve({ reservedKeywords: getOptions().codeCompletionKeywords, tables: [] } as Schema.Database);
-            } else if (!getOptions().codeCompletionDatabase) {
+            if (!Global.activeConnection && !getOptions().codeCompletionDatabase) {
                 return Promise.resolve({ reservedKeywords: getOptions().codeCompletionKeywords, tables: [] } as Schema.Database);
             } else {
                 return this.build(Global.activeConnection, getOptions().codeCompletionKeywords, getOptions().maxTablesCount);
