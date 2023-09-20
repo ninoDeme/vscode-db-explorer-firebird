@@ -70,21 +70,24 @@ function setDataTypeOptions(index, options) {
 // CONSTRUCT AN API URL REQUEST
 function generateRequest(data) {
   const count = Number($("#countSelect").val());
-  const query = encodeURIComponent(JSON.stringify(data));
-  let url = `https://www.mockaroo.com/api/generate.sql?count=${count}&key=${apiKey}&fields=${query}`;
+
+  // the sql format apparently doesn't work anymore
+  let url = `https://api.mockaroo.com/api/generate.json?count=${count}&key=${apiKey}&fields=${encodeURIComponent(JSON.stringify(data))}`;
 
   getResults(url);
 }
 
 // GET RESULTS
-function getResults(url) {
-  $.ajax(url, {
-    success: data => {
-      data = data.replace(/insert into /g, `insert into ${tableName.trim()}`);
-      returnResult("gotData", data);
-    },
-    error: (xhr, status, error) => {
-      returnResult("error", error);
+function getResults(url, data) {
+  fetch(url, {method: 'GET'}).then(result => {
+    if (result.ok) {
+      result.json().then(data => {
+        returnResult("gotData", data);
+      }).catch(error => returnResult("error", error.message ?? error));
+    } else if (result.status === 401) {
+      returnResult("error", "Unauthorized");
+    } else {
+      result.text().then(error => returnResult("error", error.message ?? error));
     }
   });
 }

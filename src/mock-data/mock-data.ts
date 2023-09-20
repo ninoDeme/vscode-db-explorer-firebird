@@ -3,28 +3,34 @@ import { dirname, join } from "path";
 import { readFile } from "fs";
 import { logger } from "../logger/logger";
 import { Driver } from "../shared/driver";
+import * as Firebird from "node-firebird";
+
 
 export interface Message {
   command: string;
   data: any;
 }
 
+interface MockField {
+  name: string,
+  type: string,
+  notnull: boolean
+}
+
 export default class MockData implements Disposable {
-  private resourceScheme = "vscode-resource";
   private disposable?: Disposable;
-  public resourcesPath: string;
   private panel: WebviewPanel | undefined;
   private htmlCache: { [path: string]: string };
 
   private tableName: string;
-  private fields: any;
+  private fields: MockField[];
   private apiKey: string;
 
   constructor(private extensionPath: string) {
     this.htmlCache = {};
   }
 
-  display(table: string, fields: Array<any>, apiKey: string) {
+  display(table: string, fields: MockField[], apiKey: string) {
     this.tableName = table;
     this.fields = fields;
     this.apiKey = apiKey;
@@ -34,11 +40,10 @@ export default class MockData implements Disposable {
      * DEV: => "src",...
      * PROD: => "out",...
      */
-    this.show(join(this.extensionPath, "out", "mock-data", "htmlContent", "index.html"));
+    this.show(join(this.extensionPath, "src", "mock-data", "htmlContent", "index.html"));
   }
 
   show(htmlPath: string) {
-    this.resourcesPath = dirname(htmlPath);
     if (!this.panel) {
       this.init();
     }
@@ -91,11 +96,12 @@ export default class MockData implements Disposable {
   }
 
   private replaceUris(html: string, htmlPath: string) {
-    const basePath = Uri.parse(dirname(htmlPath))
-      .with({ scheme: this.resourceScheme })
-      .toString();
-    const regex = /(href|src)="(.+?)"/g;
-    html = html.replace(regex, `$1="${basePath + "$2"}"`);
+    const path = dirname(htmlPath);
+    const x = (str: string): string => {
+      return this.panel.webview.asWebviewUri(Uri.file(path + str)).toString();
+    };
+    const regex = /(?<=(href|src)=")(.+?)(?=")/g;
+    html = html.replace(regex, x);
     return html;
   }
 
@@ -115,13 +121,21 @@ export default class MockData implements Disposable {
       });
     }
     if (message.command === "gotData") {
-      Driver.createSQLTextDocument(`execute block as begin\n${message.data}end`);
+      const data: Record<string, any>[] = message.data;
+
+      // Constructing manually the insert because mockaroo sql format doesn't work
+      let resultSQL = `insert into ${this.tableName.trim()} (\n  ${this.fields.map(v => v.name).join(',\n  ')}\n)\nvalues\n  `;
+      resultSQL += `(${data.map(row => this.fields.map(f => Firebird.escape(row[f.name])).join(', ')).join('),\n  (')});\n`;
+      
+      Driver.createSQLTextDocument(`execute block as begin\n${resultSQL}end`);
     }
 
     if (message.command === "error") {
       logger.error(message.data);
       if (message.data === "Unauthorized") {
         logger.showError("ERROR: Unauthorized! Please check your API key and try again.");
+      } else {
+        logger.showError("ERROR: " + message.data);
       }
     }
   }

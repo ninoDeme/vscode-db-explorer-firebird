@@ -1,13 +1,12 @@
-import { WebviewPanel, window, ViewColumn, Disposable, WebviewPanelOptions, WebviewOptions } from "vscode";
+import { WebviewPanel, window, ViewColumn, Disposable, WebviewPanelOptions, WebviewOptions, Uri } from "vscode";
 import { EventEmitter } from "events";
 import { dirname } from "path";
 import { readFile } from "fs";
 import { logger } from "../logger/logger";
-import * as vscode from 'vscode';
 
 export interface Message {
   command: string;
-  data: Object;
+  data: object;
   id?: string;
 }
 
@@ -33,16 +32,16 @@ export class QueryResultsView extends EventEmitter implements Disposable {
     this.readWithCache(htmlPath, (html: string) => {
       if (this.panel) {
         // little hack to make the html unique so that the webview is reloaded
-        html = html.replace(/\<\/body\>/, `<div id="${this.randomString(8)}"></div></body>`);
+        html = html.replace(/<\/body>/, `<div id="${this.randomString(8)}"></div></body>`);
         this.panel.webview.html = html;
       }
     });
   }
 
   private init() {
-    let subscriptions = [];
+    const subscriptions = [];
 
-    let options: WebviewPanelOptions & WebviewOptions = {
+    const options: WebviewPanelOptions & WebviewOptions = {
       enableScripts: true,
       retainContextWhenHidden: false, // we dont need to keep the state
       // localResourceRoots: [Uri.parse(this.resourcesPath).with({ scheme: "vscode-resource" })]
@@ -80,11 +79,11 @@ export class QueryResultsView extends EventEmitter implements Disposable {
 
   private replaceUris(html: string, htmlPath: string) {
       
-    let path = dirname(htmlPath);
-    let x = (str: string): string => {
-      return this.panel.webview.asWebviewUri(vscode.Uri.file(path + str)).toString();
+    const path = dirname(htmlPath);
+    const x = (str: string): string => {
+      return this.panel.webview.asWebviewUri(Uri.file(path + str)).toString();
     };
-    let regex = /(?<=(href|src)\=\")(.+?)(?=\")/g;
+    const regex = /(?<=(href|src)=")(.+?)(?=")/g;
     html = html.replace(regex, x);
     return html;
   }
