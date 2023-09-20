@@ -78,7 +78,7 @@ function generateRequest(data) {
 }
 
 // GET RESULTS
-function getResults(url, data) {
+function getResults(url) {
   fetch(url, {method: 'GET'}).then(result => {
     if (result.ok) {
       result.json().then(data => {

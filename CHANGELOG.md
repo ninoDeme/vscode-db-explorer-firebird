@@ -2,6 +2,13 @@
 
 All notable changes to the "vscode-db-explorer-firebird" extension will be documented in this file.
 
+## 0.1.4 - 2023-09-20
+
+ - Fixed mockaroo integration
+ - Added experimental native driver support
+ - Fixed icon in sidebar
+ 
+
 ## 0.1.3 - 2023-02-15
 
  - Added type or field information to completion window
