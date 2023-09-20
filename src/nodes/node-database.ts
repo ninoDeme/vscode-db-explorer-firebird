@@ -46,6 +46,7 @@ export class NodeDatabase implements FirebirdTree {
             return new NodeTable(this.dbDetails, table.TABLE_NAME);
           });
         } catch (err) {
+          logger.error(err);
           return [new NodeInfo(err)];
         }
       })

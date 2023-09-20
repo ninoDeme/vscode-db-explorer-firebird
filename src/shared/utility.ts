@@ -98,18 +98,18 @@ export class Driver {
             }
           });
         });
-        connection.detach();
+        this.client.detach(connection);
         logger.info("Finished Firebird query, displaying results... ");
         return result;
       } else {
-        connection.detach();
+        this.client.detach(connection);
         // because node-firebird plugin doesn't have callback on successfull ddl statements (test further)
         logger.info("Finished Firebird query.");
         const ddl = this.constructResponse(sql);
         return ([{message: `${ddl} command executed successfully!`}]);
       }
     } catch (err) {
-      connection.detach();
+      this.client.detach(connection);
       throw err;
 
     }
@@ -117,9 +117,10 @@ export class Driver {
 
 }
 
-export interface ClientI<K> {
+export interface ClientI<K extends Firebird.Database | Attachment> {
   queryPromise<T extends object>(connection: K, sql: string): Promise<T[]>;
-  createConnection(connectionOptions: any): Promise<K>;
+  createConnection(connectionOptions: ConnectionOptions): Promise<K>;
+  detach(connection: K): Promise<void>;
 }
 
 export class NodeClient implements ClientI<Firebird.Database> {
@@ -136,7 +137,7 @@ export class NodeClient implements ClientI<Firebird.Database> {
     });
   }
 
-  public async createConnection(connectionOptions: any): Promise<Firebird.Database> {
+  public async createConnection(connectionOptions: ConnectionOptions): Promise<Firebird.Database> {
     return new Promise<Firebird.Database>((resolve, reject) => {
       Firebird.attach(connectionOptions, (err, db) => {
         if (err) {
@@ -147,15 +148,29 @@ export class NodeClient implements ClientI<Firebird.Database> {
       });
     });
   }
+
+  public async detach(connection: Firebird.Database) {
+    connection.detach();
+  }
 }
 
 export class NativeClient implements ClientI<Attachment> {
   public async queryPromise<T extends object>(connection: Attachment, sql: string): Promise<T[]> {
-
+    if (!connection?.isValid) {
+      throw new Error("Invalid Connection");
+    }
     const trans = await connection.startTransaction();
-    const res = await connection.executeQuery(trans, sql);
-    await trans.commit();
-    return await res.fetchAsObject();
+    try {
+      const res = await connection.executeQuery(trans, sql);
+      const result = await res.fetchAsObject<T>();
+      trans.commit();
+      return result;  
+    } catch (err) {
+      if (trans.isValid) {
+        trans.rollback;
+      }
+      throw err;
+    }
   }
 
   public async createConnection(connectionOptions: ConnectionOptions): Promise<Attachment> {
@@ -163,5 +178,9 @@ export class NativeClient implements ClientI<Attachment> {
     const client = createNativeClient(getDefaultLibraryFilename());
 
     return await client.connect(connectionStr, {username: connectionOptions.user, password: connectionOptions.password, role: connectionOptions.role});
+  }
+
+  public async detach(connection: Attachment) {
+    connection.disconnect();
   }
 }
