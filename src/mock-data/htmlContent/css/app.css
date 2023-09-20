@@ -15,18 +15,6 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* icon */
-div.img-wrapper {
-  position: fixed;
-  bottom: 2%;
-  right: 1%;
-  z-index: 11000;
-  opacity: 0.1;
-}
-div.img-wrapper img {
-  width: 100px;
-}
-
 /* #region TOOLTIP STYLING*/
 .tooltip {
   position: relative;

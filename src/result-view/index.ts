@@ -2,7 +2,7 @@ import { Disposable } from "vscode";
 import { TextDecoder } from "util";
 import { join } from "path";
 
-import { QueryResultsView, Message } from "./queryResultsView";
+import { QueryResultsView, Message } from "./queryResultsView_old";
 
 type ResultSet = Array<any>;
 
@@ -25,7 +25,7 @@ export default class ResultView extends QueryResultsView implements Disposable {
      */
      // console.log(join(this.extensionPath, "out", "result-view", "htmlContent", "index.html"));
      
-    this.show(join(this.extensionPath, "src", "result-view", "htmlContent", "index.html"));
+    this.show(join(this.extensionPath, "src", "result-view", "htmlContent_old", "index.html"));
   }
 
   handleMessage(message: Message): void {

@@ -1,7 +1,8 @@
-import { WebviewPanel, window, ViewColumn, Disposable, WebviewPanelOptions, WebviewOptions, Webview, Uri } from "vscode";
+import { WebviewPanel, window, ViewColumn, Disposable, WebviewPanelOptions, WebviewOptions, Uri } from "vscode";
 import { EventEmitter } from "events";
+import { dirname } from "path";
+import { readFile } from "fs";
 import { logger } from "../logger/logger";
-import {getUri} from '../shared/utils';
 
 export interface Message {
   command: string;
@@ -15,19 +16,26 @@ export class QueryResultsView extends EventEmitter implements Disposable {
 
   // private resourcesPath: string;
   private panel: WebviewPanel | undefined;
-  constructor(private type: string, private title: string, private extensionUri: Uri) {
+  private htmlCache: { [path: string]: string };
+  constructor(private type: string, private title: string) {
     super();
     // this.resourcesPath = "";
+    this.htmlCache = {};
   }
 
-  show() {
+  show(htmlPath: string) {
     // this.resourcesPath = dirname(htmlPath);
     if (!this.panel) {
       this.init();
     }
 
-    const html = this._getWebviewContent(this.panel.webview);
-    this.panel.webview.html = html;
+    this.readWithCache(htmlPath, (html: string) => {
+      if (this.panel) {
+        // little hack to make the html unique so that the webview is reloaded
+        html = html.replace(/<\/body>/, `<div id="${this.randomString(8)}"></div></body>`);
+        this.panel.webview.html = html;
+      }
+    });
   }
 
   private init() {
@@ -52,6 +60,32 @@ export class QueryResultsView extends EventEmitter implements Disposable {
     );
 
     this.disposable = Disposable.from(...subscriptions);
+  }
+
+  private readWithCache(path: string, callback: (html: string) => void) {
+    let html: string = "";
+    if (path in this.htmlCache) {
+      html = this.htmlCache[path];
+      callback(html);
+    } else {
+      readFile(path, "utf8", (_err, content) => {
+        html = content || "";
+        html = this.replaceUris(html, path);
+        this.htmlCache[path] = html;
+        callback(html);
+      });
+    }
+  }
+
+  private replaceUris(html: string, htmlPath: string) {
+      
+    const path = dirname(htmlPath);
+    const x = (str: string): string => {
+      return this.panel.webview.asWebviewUri(Uri.file(path + str)).toString();
+    };
+    const regex = /(?<=(href|src)=")(.+?)(?=")/g;
+    html = html.replace(regex, x);
+    return html;
   }
 
   send(message: Message) {
@@ -79,24 +113,4 @@ export class QueryResultsView extends EventEmitter implements Disposable {
     }
     this.panel = undefined;
   }
-
-  private _getWebviewContent(webView: Webview) {
-    const main = getUri(webView, this.extensionUri, ["out", "result-view.js"]);
-
-    return /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${this.title}</title>
-        </head>
-        <body>
-          <h1>Hello World!</h1>
-          <script type="module" src="${main}"></script>
-        </body>
-      </html>
-    `;
-  }
-
 }

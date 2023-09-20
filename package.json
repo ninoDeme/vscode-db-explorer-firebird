@@ -33,10 +33,9 @@
   "scripts": {
     "tsc-compile": "tsc -p ./",
     "vscode:prepublish": "npm run compile",
-    "esbuild-base": "rimraf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "esbuild-build": "npm run -S esbuild-base -- --sourcemap",
-    "compile": "npm run -S esbuild-build && copy-folder ./node_modules/node-firebird-native-api/build/Release/ out/Release",
-    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "compile": "node ./esbuild.js",
+    "watch": "node ./esbuild.js --watch",
+
     "tsc-watch": "tsc -watch -p ./"
   },
   "contributes": {
@@ -290,6 +289,7 @@
     "onLanguage:sql"
   ],
   "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.2",
     "node-firebird": "^0.9.8",
     "node-firebird-driver": "^3.1.0",
     "node-firebird-driver-native": "^3.1.0",

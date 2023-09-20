@@ -1,2 +1,4 @@
 htmlContent/
 out/
+esbuild.js
+node_modules/
