@@ -1,8 +1,7 @@
-import { Disposable } from "vscode";
+import { Disposable, ExtensionContext } from "vscode";
 import { TextDecoder } from "util";
-import { join } from "path";
 
-import { QueryResultsView, Message } from "./queryResultsView_old";
+import { QueryResultsView, Message } from "./queryResultsView";
 
 type ResultSet = Array<any>;
 
@@ -10,8 +9,8 @@ export default class ResultView extends QueryResultsView implements Disposable {
   private resultSet?: ResultSet;
   private recordsPerPage: string;
 
-  constructor(private extensionPath: string) {
-    super("resultview", "Firebird Query Results");
+  constructor(context: ExtensionContext) {
+    super("resultview", "Firebird Query Results", context.extensionUri);
   }
 
   display(resultSet: any, recordsPerPage: string) {
@@ -25,7 +24,7 @@ export default class ResultView extends QueryResultsView implements Disposable {
      */
      // console.log(join(this.extensionPath, "out", "result-view", "htmlContent", "index.html"));
      
-    this.show(join(this.extensionPath, "src", "result-view", "htmlContent_old", "index.html"));
+    this.show();
   }
 
   handleMessage(message: Message): void {

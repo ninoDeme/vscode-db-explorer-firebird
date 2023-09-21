@@ -34,7 +34,7 @@ export function activate(context: ExtensionContext) {
   const firebirdDatabaseWords = new KeywordsDb();
   const firebirdTreeDataProvider = new FirebirdTreeDataProvider(context);
   const firebirdMockData = new MockData(context.extensionPath);
-  const firebirdQueryResults = new QueryResultsView(context.extensionPath);
+  const firebirdQueryResults = new QueryResultsView(context);
 
   context.subscriptions.push(
     window.registerTreeDataProvider(Constants.FirebirdExplorerViewId, firebirdTreeDataProvider),

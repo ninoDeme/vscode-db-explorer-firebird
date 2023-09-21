@@ -33,9 +33,13 @@
   "scripts": {
     "tsc-compile": "tsc -p ./",
     "vscode:prepublish": "npm run compile",
-    "compile": "node ./esbuild.js",
-    "watch": "node ./esbuild.js --watch",
-
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node  --sourcemap",
+    "esbuild-result-view": "esbuild ./src/result-view/main.ts --bundle --outfile=out/result-view.js --format=esm",
+    "esbuild-mock-data": "esbuild ./src/mock-data/main.ts --bundle --outfile=out/mock-data.js --format=esm",
+    "compile": "rimraf out && npm run -S esbuild-base && copy-folder ./node_modules/node-firebird-native-api/build/Release/ out/Release",
+    "watch-result-view": "npm run -S esbuild-result-view -- --sourcemap --watch",
+    "watch-mock-data": "npm run -S esbuild-mock-data -- --sourcemap --watch",
+    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "tsc-watch": "tsc -watch -p ./"
   },
   "contributes": {
