@@ -1,13 +1,13 @@
-import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from "vscode";
-import { join } from "path";
-import { NodeTable, NodeInfo } from "./";
-import { ConnectionOptions, FirebirdTree } from "../interfaces";
-import { getOptions, Constants } from "../config";
-import { Driver } from "../shared/driver";
-import { Global } from "../shared/global";
-import { FirebirdTreeDataProvider } from "../firebirdTreeDataProvider";
-import { databaseInfoQry, getTablesQuery } from "../shared/queries";
-import { logger } from "../logger/logger";
+import {ExtensionContext, TreeItem, TreeItemCollapsibleState} from "vscode";
+import {join} from "path";
+import {NodeTable, NodeInfo} from "./";
+import {ConnectionOptions, FirebirdTree} from "../interfaces";
+import {getOptions, Constants} from "../config";
+import {Driver} from "../shared/driver";
+import {Global} from "../shared/global";
+import {FirebirdTreeDataProvider} from "../firebirdTreeDataProvider";
+import {databaseInfoQry, getTablesQuery} from "../shared/queries";
+import {logger} from "../logger/logger";
 
 
 export class NodeDatabase implements FirebirdTree {
@@ -37,23 +37,18 @@ export class NodeDatabase implements FirebirdTree {
   // list database tables
   public async getChildren(): Promise<FirebirdTree[]> {
     const tablesQry = getTablesQuery(getOptions().maxTablesCount);
+    try {
+      const connection = await Driver.client.createConnection(this.dbDetails);
 
-    return Driver.client.createConnection(this.dbDetails)
-      .then(async connection => {
-        try {
-          const tables = await Driver.client.queryPromise<any>(connection, tablesQry);
-          return tables.map<NodeTable>(table => {
-            return new NodeTable(this.dbDetails, table.TABLE_NAME);
-          });
-        } catch (err) {
-          logger.error(err);
-          return [new NodeInfo(err)];
-        }
-      })
-      .catch(err => {
-        logger.error(err);
-        return [new NodeInfo(err)];
+      const tables = await Driver.client.queryPromise<any>(connection, tablesQry);
+      return tables.map<NodeTable>(table => {
+        return new NodeTable(this.dbDetails, table.TABLE_NAME);
       });
+    } catch (err) {
+      logger.showError(err);
+      logger.error(err);
+      return [new NodeInfo(err)];
+    }
   }
 
   //  run predefined sql query
@@ -90,7 +85,7 @@ export class NodeDatabase implements FirebirdTree {
   public async removeDatabase(context: ExtensionContext, firebirdTreeDataProvider: FirebirdTreeDataProvider) {
     logger.info("Remove database start...");
 
-    const connections = context.globalState.get<{ [key: string]: ConnectionOptions }>(Constants.ConectionsKey);
+    const connections = context.globalState.get<{[key: string]: ConnectionOptions;}>(Constants.ConectionsKey);
 
     if (connections) {
       delete connections[this.dbDetails.id];

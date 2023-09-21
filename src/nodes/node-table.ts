@@ -1,11 +1,11 @@
-import { TreeItem, TreeItemCollapsibleState, commands, Uri, ExtensionContext } from "vscode";
-import { join } from "path";
-import { NodeField, NodeInfo } from ".";
-import { ConnectionOptions, FirebirdTree, Options } from "../interfaces";
-import { selectAllRecordsQuery, tableInfoQuery, dropTableQuery } from "../shared/queries";
-import { Global } from "../shared/global";
-import { Driver } from "../shared/driver";
-import { logger } from "../logger/logger";
+import {TreeItem, TreeItemCollapsibleState, commands, Uri, ExtensionContext} from "vscode";
+import {join} from "path";
+import {NodeField, NodeInfo} from ".";
+import {ConnectionOptions, FirebirdTree, Options} from "../interfaces";
+import {selectAllRecordsQuery, tableInfoQuery, dropTableQuery} from "../shared/queries";
+import {Global} from "../shared/global";
+import {Driver} from "../shared/driver";
+import {logger} from "../logger/logger";
 import MockData from "../mock-data/mock-data";
 
 export class NodeTable implements FirebirdTree {
@@ -27,22 +27,17 @@ export class NodeTable implements FirebirdTree {
   public async getChildren(): Promise<any> {
     const qry = tableInfoQuery(this.table);
 
-    return Driver.client.createConnection(this.dbDetails)
-      .then(connection => {
-        return Driver.client.queryPromise<any[]>(connection, qry)
-          .then(fields => {
-            return fields.map<NodeField>(field => {
-              return new NodeField(field, this.table, this.dbDetails);
-            });
-          })
-          .catch(err => {
-            logger.error(err);
-            return [new NodeInfo(err)];
-          });
-      })
-      .catch(err => {
-        logger.error(err);
+    try {
+      const connection = await Driver.client.createConnection(this.dbDetails);
+      const fields = await Driver.client.queryPromise<any[]>(connection, qry);
+      return fields.map<NodeField>(field => {
+        return new NodeField(field, this.table, this.dbDetails);
       });
+    } catch (err) {
+      logger.error(err);
+      logger.showError(err);
+      return [new NodeInfo(err)];
+    }
   }
 
   //  run predefined sql query
@@ -83,7 +78,7 @@ export class NodeTable implements FirebirdTree {
 
     const qry = dropTableQuery(this.table.trim());
     Global.activeConnection = this.dbDetails;
-  
+
     Driver.runQuery(qry, this.dbDetails)
       .then(results => {
         logger.info(results[0].message);

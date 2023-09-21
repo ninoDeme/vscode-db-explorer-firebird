@@ -1,7 +1,7 @@
 {
   "name": "vscode-db-explorer-firebird-fork",
   "displayName": "DB Explorer For Firebird Databases Fork",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
@@ -33,9 +33,10 @@
   "scripts": {
     "tsc-compile": "tsc -p ./",
     "vscode:prepublish": "npm run compile",
-    "esbuild-base": "rimraf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild-base": "rimraf out && rimraf node_modules/node-firebird-native-api/build/Release && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:node-firebird-native-api --format=cjs --platform=node",
     "esbuild-build": "npm run -S esbuild-base -- --sourcemap",
-    "compile": "npm run -S esbuild-build && copy-folder ./node_modules/node-firebird-native-api/build/Release/ out/Release",
+    "install-native": "npm run --prefix node_modules/node-firebird-native-api/ gyp:configure && npm run --prefix node_modules/node-firebird-native-api/ gyp:build",
+    "compile": "npm run -S esbuild-build",
     "watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "tsc-watch": "tsc -watch -p ./"
   },
@@ -126,6 +127,16 @@
       {
         "command": "firebird.selectFieldRecords",
         "title": "Select All Field Records",
+        "category": "Firebird"
+      },
+      {
+        "command": "firebird.buildNative",
+        "title": "Build Native Driver",
+        "category": "Firebird"
+      },
+      {
+        "command": "firebird.showLogs",
+        "title": "Show Extension Logs",
         "category": "Firebird"
       }
     ],
@@ -293,7 +304,12 @@
     "node-firebird": "^0.9.8",
     "node-firebird-driver": "^3.1.0",
     "node-firebird-driver-native": "^3.1.0",
-    "node-firebird-native-api": "3.0.0",
+    "node-firebird-native-api": "^3.0.0",
+
+    "bindings": "^1.5.0",
+    "node-addon-api": "^5.0.0",
+    "node-gyp": "^9.3.0",
+    
     "uuid": "^8.3.2"
   },
   "devDependencies": {
