@@ -1,7 +1,7 @@
 {
   "name": "vscode-db-explorer-firebird-fork",
   "displayName": "DB Explorer For Firebird Databases Fork",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
@@ -151,7 +151,7 @@
         "firebird.useNativeDriver": {
           "type": "boolean",
           "default": false,
-          "description": "[Experimental] Use native driver instead of the node based driver (required for wire encrypted databases)"
+          "markdownDescription": "[Experimental] Use native driver instead of the node based driver *Needs to have FireBird installed* (required for WireCrypt support)"
         },
         "firebird.logLevel": {
           "type": "string",
@@ -293,6 +293,7 @@
     "node-firebird": "^0.9.8",
     "node-firebird-driver": "^3.1.0",
     "node-firebird-driver-native": "^3.1.0",
+    "node-firebird-native-api": "3.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
