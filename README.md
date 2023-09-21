@@ -8,18 +8,7 @@
 <h3 align="center"> Fork of extension from <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">  Marin Vitlov </a></h3>
 <h4 align="center">Explore and run queries against your Firebird&reg; databases without leaving VS Code.</h4>
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">
-    badge-version
-  </a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=marinv.vscode-db-explorer-firebird">
-    badge-installs
-  </a>
-  <!-- <a href="https://">
-    <img src="https://" alt="badge3">
-  </a> -->
-</p>
-
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/ninoDeme.vscode-db-explorer-firebird-fork.svg) ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/ninoDeme.vscode-db-explorer-firebird-fork.svg)
 This extension allows you to connect directly to your [Firebird&reg; databases](https://firebirdsql.org/), list tables and fields, run queries, display/export results and more.
 
 ![banner](https://github.com/ninoDeme/vscode-db-explorer-firebird/blob/master/images/banner.jpg?raw=true)
@@ -29,10 +18,12 @@ This extension allows you to connect directly to your [Firebird&reg; databases](
 ### Features added in this fork
 
 - **Table alias** in code completion
+- [_Experimental_] Native driver support (required for WireCrypt support)
+- Fixed query results and mock data view
 
 ### Features in the original version
 
-- [SQL Mock Data Generator](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator) (probably broken)
+- [SQL Mock Data Generator](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock-Data-Generator)
 - Manage multiple database connections
 - List hosts, databases, tables and fields inside **Explorer View**
 - [Firebird Reserved Words](https://firebirdsql.org/refdocs/langrefupd25-reskeywords-full-reswords.html) **Code Completion**
@@ -91,6 +82,7 @@ See [here](https://github.com/ninoDeme/vscode-db-explorer-firebird/wiki/SQL-Mock
 - `firebird.maxTablesCount: <number>` | Number of tables visible in database tree. (Default **10**)
 - `firebird.recordsPerPage: <string>` | Number of records to display per page. (Default **10**)
 - `firebird.mockarooApiKey <string>` | API key for Mock Data Generator (Default **blank**)
+- `firebird.useNativeDriver <boolean>` | Enable native driver support (Default **false**)
 
 ## Disclaimer
 
