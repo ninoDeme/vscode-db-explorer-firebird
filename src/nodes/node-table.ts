@@ -1,4 +1,4 @@
-import {TreeItem, TreeItemCollapsibleState, commands, Uri, ExtensionContext} from "vscode";
+import {TreeItem, TreeItemCollapsibleState, commands, Uri, ExtensionContext, ThemeIcon} from "vscode";
 import {join} from "path";
 import {NodeField, NodeInfo} from ".";
 import {ConnectionOptions, FirebirdTree, Options} from "../interfaces";
@@ -17,10 +17,7 @@ export class NodeTable implements FirebirdTree {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: "table",
       tooltip: `[TABLE] ${this.table}`,
-      iconPath: {
-        dark: join(context.extensionPath, "resources", "icons", "dark", "table-dark.svg"),
-        light: join(context.extensionPath, "resources", "icons", "light", "table-light.svg")
-      }
+      iconPath: new ThemeIcon("table"),
     };
   }
 

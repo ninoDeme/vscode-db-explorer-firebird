@@ -1,5 +1,4 @@
-import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from "vscode";
-import { join } from "path";
+import { ExtensionContext, ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { Constants } from "../config/constants";
 import { FirebirdTreeDataProvider } from "../firebirdTreeDataProvider";
 import { NodeDatabase } from "./";
@@ -15,10 +14,7 @@ export class NodeHost implements FirebirdTree {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: "host",
       tooltip: `[HOST] ${this.host}`,
-      iconPath: {
-        dark: join(context.extensionPath, "resources", "icons", "dark", "host-dark.svg"),
-        light: join(context.extensionPath, "resources", "icons", "light", "host-light.svg")
-      }
+      iconPath: new ThemeIcon("server")
     };
   }
 

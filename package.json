@@ -51,28 +51,19 @@
         "command": "firebird.explorer.addConnection",
         "title": "Add New Connection",
         "category": "Firebird",
-        "icon": {
-          "light": "resources/icons/light/add-connection.svg",
-          "dark": "resources/icons/dark/add-connection.svg"
-        }
+        "icon": "$(add)"
       },
       {
         "command": "firebird.explorer.newSqlDocument",
         "title": "New Sql Query",
         "category": "Firebird",
-        "icon": {
-          "light": "resources/icons/light/new-sql.svg",
-          "dark": "resources/icons/dark/new-sql.svg"
-        }
+        "icon": "$(new-file)"
       },
       {
         "command": "firebird.explorer.refresh",
         "title": "Refresh",
         "category": "Firebird",
-        "icon": {
-          "light": "resources/icons/light/refresh.svg",
-          "dark": "resources/icons/dark/refresh.svg"
-        }
+        "icon": "$(refresh)"
       },
       {
         "command": "firebird.removeHost",
