@@ -1,0 +1,28 @@
+.rv-hidden {
+    display: none;
+}
+.rv-header {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+}
+.rv-spacer {
+    flex: 1 1 0;
+}
+
+.rv-results-body {
+    width: unset;
+    overflow: auto;
+}
+
+vscode-data-grid-cell {
+    width: max-content;
+}
+
+vscode-data-grid {
+    width: fit-content;
+}
+
+.rv-divider {
+    margin: 1rem;
+}

@@ -1,0 +1,24 @@
+<vscode-progress-ring id="loading"></vscode-progress-ring>
+<div id="zero-results"></div>
+<div id="results" class="rv-hidden">
+    <header class="rv-header">
+        <vscode-button id="export-button">Export</vscode-button>
+        <vscode-dropdown>
+            <vscode-option>Show 10 Rows</vscode-option>
+            <vscode-option>Show 25 Rows</vscode-option>
+            <vscode-option>Show 50 Rows</vscode-option>
+            <vscode-option>Show 100 Rows</vscode-option>
+            <vscode-option>Show All Rows</vscode-option>
+        </vscode-dropdown>
+        <div class="rv-spacer"></div>
+        <vscode-text-field id="search-input">
+            Search
+            <span slot="end" class="codicon codicon-search"></span>
+        </vscode-text-field>
+    </header>
+    <vscode-divider class="rv-divider"></vscode-divider>
+    <div class="rv-results-body">
+        <vscode-data-grid id="results-grid" aria-label="Query Results"></vscode-data-grid>
+    </div>
+
+</div>

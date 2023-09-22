@@ -31,12 +31,9 @@
   "publisher": "ninoDeme",
   "main": "./out/extension.js",
   "scripts": {
-    "tsc-compile": "tsc -p ./",
-    "tsc-watch": "tsc -watch -p ./",
-
     "vscode:prepublish": "npm run compile",
-    "esbuild-result-view": "esbuild ./src/result-view/main.ts --bundle --outfile=out/result-view.js --format=esm",
-    "esbuild-mock-data": "esbuild ./src/mock-data/main.ts --bundle --outfile=out/mock-data.js --format=esm",
+    "esbuild-result-view": "esbuild ./src/result-view/template/main.ts --bundle --outfile=out/result-view.js --format=esm --loader:.html=text",
+    "esbuild-mock-data": "esbuild ./src/mock-data/template/main.ts --bundle --outfile=out/mock-data.js --format=esm --loader:.html=text",
     "watch-result-view": "npm run -S esbuild-result-view -- --sourcemap --watch",
     "watch-mock-data": "npm run -S esbuild-mock-data -- --sourcemap --watch",
     "esbuild-base": "rimraf out && rimraf node_modules/node-firebird-native-api/build/Release && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:node-firebird-native-api --format=cjs --platform=node",
@@ -306,16 +303,15 @@
     "onLanguage:sql"
   ],
   "dependencies": {
+    "@vscode/codicons": "^0.0.33",
     "@vscode/webview-ui-toolkit": "^1.2.2",
+    "bindings": "^1.5.0",
+    "node-addon-api": "^5.0.0",
     "node-firebird": "^0.9.8",
     "node-firebird-driver": "^3.1.0",
     "node-firebird-driver-native": "^3.1.0",
     "node-firebird-native-api": "^3.0.0",
-
-    "bindings": "^1.5.0",
-    "node-addon-api": "^5.0.0",
     "node-gyp": "^9.3.0",
-    
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -323,6 +319,7 @@
     "@types/node": "^14.11.2",
     "@types/uuid": "^8.3.0",
     "@types/vscode": "^1.32.0",
+    "@types/vscode-webview": "^1.57.2",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "@typescript-eslint/parser": "^5.52.0",
     "@vscode/test-electron": "^2.2.3",

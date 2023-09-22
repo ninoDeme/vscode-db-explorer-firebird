@@ -1,0 +1,8 @@
+{
+    "extends":["./tsconfig.json"],
+    "files": ["./src/result-view/**/*.ts", "./src/mock-data/**/*.ts"],
+    "exclude": ["./**/queryResultsView*.ts", "./**/index.ts"],
+    "compilerOptions": {
+        "lib": ["DOM", "ES2019"]
+    }
+}
