@@ -1,17 +1,19 @@
-import { ExtensionContext, window, commands, workspace } from "vscode";
-import { Constants, getOptions } from "./config";
-import { FirebirdTreeDataProvider } from "./firebirdTreeDataProvider";
-import { NodeHost, NodeDatabase, NodeTable, NodeField } from "./nodes";
-import { Options, FirebirdTree } from "./interfaces";
-import { connectionPicker } from "./shared/connection-picker";
-import { Driver } from "./shared/driver";
+import {ExtensionContext, window, commands, workspace} from "vscode";
+import {Constants, getOptions} from "./config";
+import {FirebirdTreeDataProvider} from "./firebirdTreeDataProvider";
+import {NodeHost, NodeDatabase, NodeTable, NodeField} from "./nodes";
+import {Options, FirebirdTree} from "./interfaces";
+import {connectionPicker} from "./shared/connection-picker";
+import {Driver} from "./shared/driver";
 import * as vscode from 'vscode';
-import { Global } from "./shared/global";
-import { logger } from "./logger/logger";
-import { KeywordsDb } from "./language-server/db-words.provider";
+import {Global} from "./shared/global";
+import {logger} from "./logger/logger";
+import {KeywordsDb} from "./language-server/db-words.provider";
 import QueryResultsView from "./result-view";
 import MockData from "./mock-data/mock-data";
 import LanguageServer from "./language-server";
+import * as cp from 'node:child_process';
+
 
 export function activate(context: ExtensionContext) {
   logger.info(`Activating extension ...`);
@@ -19,12 +21,12 @@ export function activate(context: ExtensionContext) {
   /* load configuration and reload every time it's changed */
   logger.info(`Loading configuration...`);
   let config: Options = getOptions();
-  Driver.setClient(config.useNativeDriver);
+  Driver.setClient(config.useNativeDriver, context);
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(() => {
       logger.debug("Configuration changed. Reloading configuration...");
       config = getOptions();
-      Driver.setClient(config.useNativeDriver);
+      Driver.setClient(config.useNativeDriver, context);
       commands.executeCommand("firebird.explorer.refresh");
     })
   );
@@ -236,6 +238,51 @@ export function activate(context: ExtensionContext) {
       fieldNode.selectAllSingleFieldRecords().then(result => {
         firebirdQueryResults.display(result, config.recordsPerPage);
       });
+    })
+  );
+
+    /* COMMAND field node: open extension logs */
+    context.subscriptions.push(
+      commands.registerCommand("firebird.showLogs", () => {
+        logger.showOutput();
+      })
+    );
+
+  /* COMMAND field node: build native client */
+  context.subscriptions.push(
+    commands.registerCommand("firebird.buildNative", async () => {
+      // TODO: precompile and just link it depending on the platform
+      const answer = await vscode.window.showInformationMessage("Compile the native driver? (requires python to be installed)", "Yes", "No");
+      if (answer === "Yes") {
+        // Execute the npm script
+        const child = cp.exec(`npm run install-native`, {cwd: context.extensionUri.fsPath});
+        const statusIndicator = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+        statusIndicator.text = "$(loading~spin) Compiling Native Driver...";
+        statusIndicator.command = "firebird.showLogs";
+
+        statusIndicator.show();
+
+        // Capture and display the output of the npm script
+        child.stdout.on('data', (data) => {
+          logger.output(`[node-gyp driver compilation] ${data}`);
+        });
+
+        // Handle any errors that occur during script execution
+        child.on('error', (error) => {
+          logger.showError(`Error: ${error.message}`);
+        });
+
+        // Listen for when the script process exits
+        child.on('close', (code) => {
+          statusIndicator.dispose();
+          if (code) {
+            logger.error(`Build failed: Terminal exited with code: ${code}`);
+            logger.showError(`Build failed: Terminal exited with code: ${code}`);
+          } else {
+            window.showInformationMessage("Compiled Driver Successfully");
+          }
+        });
+      }
     })
   );
 }

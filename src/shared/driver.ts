@@ -1,15 +1,17 @@
-import {TextEditor, workspace, window, ViewColumn} from "vscode";
+import {TextEditor, workspace, window, ViewColumn, ExtensionContext, commands} from "vscode";
 import * as Firebird from "node-firebird";
 import {Global} from "./global";
 import {ConnectionOptions} from "../interfaces";
 import {logger} from "../logger/logger";
-import {Attachment, ResultSet, createNativeClient, getDefaultLibraryFilename} from 'node-firebird-driver-native';
+import type { Attachment, Client, ResultSet} from 'node-firebird-driver-native';
 import {simpleCallbackToPromise} from './utils';
+import * as fs from 'fs';
+import path = require('path');
 
 export class Driver {
 
-  static setClient(useNativeDriver: boolean) {
-    this.client = useNativeDriver ? new NativeClient() : new NodeClient();
+  static setClient(useNativeDriver: boolean, context: ExtensionContext) {
+    this.client = useNativeDriver ? new NativeClient(context.extensionUri.fsPath) : new NodeClient();
   }
 
   static client: ClientI<any>;
@@ -134,12 +136,13 @@ export class NodeClient implements ClientI<Firebird.Database> {
   }
 
   public async createConnection(connectionOptions: ConnectionOptions): Promise<Firebird.Database> {
-    return new Promise<Firebird.Database>((resolve, reject) => {
+    return await new Promise<Firebird.Database>((resolve, reject) => {
       Firebird.attach(connectionOptions, (err, db) => {
         if (err) {
           logger.error(err.message);
           reject(err);
         }
+
         resolve(db);
       });
     });
@@ -153,6 +156,13 @@ export class NodeClient implements ClientI<Firebird.Database> {
 }
 
 export class NativeClient implements ClientI<Attachment> {
+
+  constructor(pathExt: string) {
+    if (!fs.existsSync(path.join(pathExt, 'node_modules/node-firebird-native-api/build/Release'))) {
+      commands.executeCommand("firebird.buildNative");
+    }
+  }
+
   public async queryPromise<T extends object>(connection: Attachment, sql: string): Promise<T[]> {
     if (!connection?.isValid) {
       throw new Error("Invalid Connection");
@@ -178,9 +188,18 @@ export class NativeClient implements ClientI<Attachment> {
 
   public async createConnection(connectionOptions: ConnectionOptions): Promise<Attachment> {
     const connectionStr = `${connectionOptions.host}/${connectionOptions.port ?? '3050'}:${connectionOptions.database}`;
-    const client = createNativeClient(getDefaultLibraryFilename());
+
+    let client: Client;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {createNativeClient, getDefaultLibraryFilename} = await import('node-firebird-driver-native');
+      client = createNativeClient(getDefaultLibraryFilename());  
+    } catch (e) {
+      throw new Error("Unable to initialize native driver: " + (e?.message ?? e));
+    }
 
     return await client.connect(connectionStr, {username: connectionOptions.user, password: connectionOptions.password, role: connectionOptions.role});
+
   }
 
   public async detach(connection: Attachment) {

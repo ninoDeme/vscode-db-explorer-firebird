@@ -1,7 +1,7 @@
 {
   "name": "vscode-db-explorer-firebird-fork",
   "displayName": "DB Explorer For Firebird Databases Fork",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A tool for exploring and querying Firebird Databases directly inside VS Code.",
   "categories": [
     "Programming Languages",
@@ -32,15 +32,18 @@
   "main": "./out/extension.js",
   "scripts": {
     "tsc-compile": "tsc -p ./",
+    "tsc-watch": "tsc -watch -p ./",
+
     "vscode:prepublish": "npm run compile",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node  --sourcemap",
     "esbuild-result-view": "esbuild ./src/result-view/main.ts --bundle --outfile=out/result-view.js --format=esm",
     "esbuild-mock-data": "esbuild ./src/mock-data/main.ts --bundle --outfile=out/mock-data.js --format=esm",
-    "compile": "rimraf out && npm run -S esbuild-base && copy-folder ./node_modules/node-firebird-native-api/build/Release/ out/Release",
     "watch-result-view": "npm run -S esbuild-result-view -- --sourcemap --watch",
     "watch-mock-data": "npm run -S esbuild-mock-data -- --sourcemap --watch",
-    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
-    "tsc-watch": "tsc -watch -p ./"
+    "esbuild-base": "rimraf out && rimraf node_modules/node-firebird-native-api/build/Release && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:node-firebird-native-api --format=cjs --platform=node",
+    "esbuild-build": "npm run -S esbuild-base -- --sourcemap",
+    "install-native": "npm run --prefix node_modules/node-firebird-native-api/ gyp:configure && npm run --prefix node_modules/node-firebird-native-api/ gyp:build",
+    "compile": "npm run -S esbuild-build && npm run esbuild-result-view && npm run esbuild-mock-data",
+    "watch": "npm run -S esbuild-base -- --sourcemap --watch"
   },
   "contributes": {
     "commands": [
@@ -129,6 +132,16 @@
       {
         "command": "firebird.selectFieldRecords",
         "title": "Select All Field Records",
+        "category": "Firebird"
+      },
+      {
+        "command": "firebird.buildNative",
+        "title": "Build Native Driver",
+        "category": "Firebird"
+      },
+      {
+        "command": "firebird.showLogs",
+        "title": "Show Extension Logs",
         "category": "Firebird"
       }
     ],
@@ -297,7 +310,12 @@
     "node-firebird": "^0.9.8",
     "node-firebird-driver": "^3.1.0",
     "node-firebird-driver-native": "^3.1.0",
-    "node-firebird-native-api": "3.0.0",
+    "node-firebird-native-api": "^3.0.0",
+
+    "bindings": "^1.5.0",
+    "node-addon-api": "^5.0.0",
+    "node-gyp": "^9.3.0",
+    
     "uuid": "^8.3.2"
   },
   "devDependencies": {

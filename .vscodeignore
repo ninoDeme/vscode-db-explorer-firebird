@@ -1,3 +1,13 @@
 node_modules
 src/**/*.ts
-images/
+.vscode
+tsconfig.json
+.eslint*
+images
+!node_modules/node-firebird-native-api
+!node_modules/node-gyp
+!node_modules/node-addon-api
+!node_modules/bindings
+!node_modules/file-uri-to-path
+
+node_modules/node-firebird-native-api/build
